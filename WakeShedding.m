@@ -75,7 +75,7 @@ for idx=1:size(inputGeom,1)-1
     %LE:y=0
 
     % Twist center is 1/4 point = y=0
-    collocation_point_local(idx,:)=[PannelGeom_r(idx,2),-PannelGeom_Chorld(idx).*0.75,0];
+    collocation_point_local(idx,:)=[PannelGeom_r(idx,2),-PannelGeom_Chorld(idx).*0.5,0];
     %Collocation Point at 3/4 chord
 
     BDVortex_local(idx,:)=[PannelGeom_r(idx,2),-PannelGeom_Chorld(idx).*0.25,0];
