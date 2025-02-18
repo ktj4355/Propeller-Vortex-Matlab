@@ -54,7 +54,7 @@ for idx=1:3:WakeGeom_size(1)*WakeGeom_size(2) % MATLAB에서 다중 For문을 �
         wakePoint1=WakeGeom(idx_LocalWake,wakeind_X:wakeind_Z);
         wakePoint2=WakeGeom(idx_LocalWake+1,wakeind_X:wakeind_Z);
         %integrate Velocity
-        vind=vind+Vortex_Scully(wakePoint1,wakePoint2,Vind_Point,LocalGamma,rc(idx_LocalGamma));
+        vind=vind+Vortex_Vatistas(wakePoint1,wakePoint2,Vind_Point,LocalGamma,rc(idx_LocalGamma),1.06);
         
         end
     end

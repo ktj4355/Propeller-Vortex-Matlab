@@ -35,7 +35,7 @@ alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
 RPM	    = 5000    ;  %   rev/min
-vFree= [0,0,-1];
+vFree= [0,0,-0];
 nAzmuth=1;
 rc_Ratio=0.25;
 vortex_n=1.06;
@@ -172,10 +172,6 @@ while Total_Rotate<2500
                 gamma=Wake_Gamma(Tidx,idx);
                 vind_Wake(ColloIDX,:)=vind_Wake(ColloIDX,:)+Vortex_Vatistas(A,B,ColoP,gamma,rc_panel(gamma_idx),vortex_n);
             end
-
-
-
-
         end
     end
      figure(33)
@@ -203,7 +199,7 @@ while Total_Rotate<2500
     %gamma=0.5Veff*cl
     for iter=1:1000
         vinduced=[];
-V_inflow=[];
+V_inflow=[]
         T=0;
         P=0;
         Q=0;

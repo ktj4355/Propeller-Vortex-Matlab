@@ -25,7 +25,7 @@ r_norm=r/rc;
 a=1.25643;
    
     vortexFactor=(vortexStrength./(4*pi*r)) *((r_norm^2)/(1+(r_norm.^2)));
-    Vout=vortexFactor*(cosA-cosB)*cross(r1,r2)./(norm(cross(r1,r2)))
+    Vout=vortexFactor*(cosA-cosB)*cross(r1,r2)./(norm(cross(r1,r2)));
 
 end
 

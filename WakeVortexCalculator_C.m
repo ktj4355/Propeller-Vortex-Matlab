@@ -32,6 +32,7 @@ function [VelocityMatrix] = WakeVortexCalculator_C(DLLname,WakeGeom_ptr,GammaMat
     calllib(DLLname, 'WakeVortexCalculator',WakeGeom_ptr,GammaMatrix_ptr,rc_ptr,size(GammaMatrix_ptr.Value,1),size(GammaMatrix_ptr.Value,2),VelocityMatrix_ptr);
     vOutVel=VelocityMatrix_ptr.Value;
     VelocityMatrix=reshape(vOutVel,size(WakeGeom_ptr.Value));
+    
 
 
 end

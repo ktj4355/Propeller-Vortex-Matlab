@@ -35,9 +35,9 @@ alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
 RPM	    = 5000    ;  %   rev/min
-vFree= [0,0,-1];
+vFree= [0,0,-0];
 nAzmuth=1;
-rc_Ratio=0.25;
+rc_Ratio=0.2;
 vortex_n=1.06;
 Blade   = 2;
 [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
@@ -317,9 +317,9 @@ V_inflow=[];
 
             Data_local_raidus=[Data_local_raidus;r./R,r,Flow_Angle,alpha,Re,beta,boundVortex,Tdr];
 
-            T=T+Tdr;
-            Q=Q+dr;
-            F=F+dr;
+            T=T+2*Tdr;
+            Q=Q+2*dr;
+            F=F+2*dr;
         end
         T;
 
@@ -340,7 +340,7 @@ V_inflow=[];
 
     tmp=now_Geom_Point_TE';
     wakeForm=tmp(:)';
-    vinduced_Ax=vinduced(:,3);
+    vinduced_Ax=2*vinduced(:,3); %Blade 개수만큼 유도 전파속도 증가
     vinduced_Ax_set=transpose(vinduced_Ax.*unit_conv_Axis'+V_inflow);
     vinduced_Ax_GeomSet=[];
     vinduced_Ax_GeomSet=0.5.*(vinduced_Ax_set(:,2:end)+vinduced_Ax_set(:,1:end-1));
@@ -430,4 +430,4 @@ legend("Flow","Alpha","beta")
 figure(5)
 clf
 hold on
-plot(Data_local_raidus(:,1),Data_local_raidus(:,8),'r') % Flow
+plot(Data_local_raidus(:,1),Data_local_raidus(:,7),'r') % Flow

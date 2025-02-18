@@ -8,12 +8,12 @@ format longG
 vFree=[0,0,-10];
 Tilt_angle =0;
 Tilt_Phi =0;
-RPM=5000
-nAzimuth=36
-Blade=2
+RPM=5000;
+nAzimuth=36;
+Blade=2;
 
 R_p=@(angle)    [cosd(angle), 0 sind(angle);
-                 0          ,0,0]
+                 0          ,0,0];
 R_y
 
 

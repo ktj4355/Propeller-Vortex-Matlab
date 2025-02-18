@@ -48,7 +48,11 @@ M_tip	=V_tip./340;
 Afan    =pi*R*R;
 
 
+%% nonUniform Inflow Model
 
+
+V_inflow=repmat(vFree,size(inputGeom,1),1);
+V_inflow_panel=repmat(vFree,size(inputGeom,1)-1,1);
 
 
 %% set Defalt Geometry
@@ -115,6 +119,12 @@ Wake_Geom_Position=[]; %x y z x y z
 Wake_velocity=[];
 Wake_Gamma=[];
 globalData=[];
+try
+ unloadlibrary('VortexDLL')
+catch
+end
+
+ loadlibrary('VortexDLL.dll','Vortex_DLL.h')
 while Total_Rotate<2500
 
 
@@ -166,21 +176,17 @@ while Total_Rotate<2500
             zind=(idx-1)*3+3;
             if size(Wake_Geom_Position,1)<=2; break; end
             for Tidx=1:size(Wake_Geom_Position,1)-1
-                
+
                 A=Wake_Geom_Position(Tidx,xind:zind);
                 B=Wake_Geom_Position(Tidx+1,xind:zind);
                 gamma=Wake_Gamma(Tidx,idx);
                 vind_Wake(ColloIDX,:)=vind_Wake(ColloIDX,:)+Vortex_Vatistas(A,B,ColoP,gamma,rc_panel(gamma_idx),vortex_n);
             end
-
-
-
-
         end
     end
-     figure(33)
+    figure(33)
     clf
-     hold on
+    hold on
 
     quiver3(now_Panel_Point_Colocation(:,1),now_Panel_Point_Colocation(:,2),now_Panel_Point_Colocation(:,3),vind_Wake(:,1),vind_Wake(:,2),vind_Wake(:,3))
 
@@ -203,7 +209,7 @@ while Total_Rotate<2500
     %gamma=0.5Veff*cl
     for iter=1:1000
         vinduced=[];
-V_inflow=[];
+
         T=0;
         P=0;
         Q=0;
@@ -242,7 +248,7 @@ V_inflow=[];
             V_inflow_WakeInduced_Span = dot(v_infow_WakeInduced,unit_conv_Span);
             V_inflow_WakeInduced_Chord = dot(v_infow_WakeInduced,unit_conv_Chord);
 
-            
+
             V_induced_sum_axis=V_inflow_rot_Axis+V_inflow_induced_Axis+V_inflow_WakeInduced_Axis;
             V_induced_sum_span=V_inflow_rot_span+V_inflow_induced_span+V_inflow_WakeInduced_Span;
             V_induced_sum_chord=V_inflow_rot_chord+V_inflow_induced_chord+V_inflow_WakeInduced_Chord;
@@ -252,7 +258,7 @@ V_inflow=[];
             V_inflow_sum_span=V_inflow_free_span+V_induced_sum_span;
             V_inflow_sum_chord=V_inflow_free_chord+V_induced_sum_chord;
             vinduced=[vinduced;V_inflow_sum_span,V_inflow_sum_chord,V_inflow_sum_axis];
-            V_inflow=[ V_inflow;vFree];
+
 
             Flow_Angle=rad2deg(atan2(-V_inflow_sum_axis,-V_inflow_sum_chord));
             Veff=sqrt((V_inflow_sum_axis.^2+V_inflow_sum_chord.^2));
@@ -341,17 +347,60 @@ V_inflow=[];
     tmp=now_Geom_Point_TE';
     wakeForm=tmp(:)';
     vinduced_Ax=vinduced(:,3);
-    vinduced_Ax_set=transpose(vinduced_Ax.*unit_conv_Axis'+V_inflow);
+    vinduced_Ax_set=transpose(vinduced_Ax.*unit_conv_Axis'+V_inflow_panel);
     vinduced_Ax_GeomSet=[];
     vinduced_Ax_GeomSet=0.5.*(vinduced_Ax_set(:,2:end)+vinduced_Ax_set(:,1:end-1));
     vinduced_Ax_GeomSet=[vinduced_Ax_set(:,1), vinduced_Ax_GeomSet, vinduced_Ax_set(:,end)];
     vinduced_Ax_GeomSet=vinduced_Ax_GeomSet(:);
+
     WakeGammaset=[0;gamma_BoundVortex]-[gamma_BoundVortex;0];
     WakeGammaset(1)=0;
+
+    V_inflow=V_inflow';
+    V_inflow=V_inflow(:);
+
     Wake_Geom_Position=[wakeForm;Wake_Geom_Position]; %x y z x y z
     Wake_velocity=[vinduced_Ax_GeomSet';Wake_velocity];
+
+
     Wake_Gamma=[WakeGammaset';Wake_Gamma];
-    Wake_Geom_Position=Wake_Geom_Position+Wake_velocity.*dt;
+    %Wake_Geom_Position=Wake_Geom_Position+Wake_velocity.*dt;
+
+
+% % C lib code
+%     if Time>-1
+%         rc_ptr = libpointer('doublePtr', rc_Geom);
+%         WakeGeom_ptr = libpointer('doublePtr', Wake_Geom_Position);
+%         GammaMatrix_ptr = libpointer('doublePtr', Wake_Gamma);
+%         DLLname='VortexDLL';
+%         vOutVel = zeros(size(WakeGeom_ptr.Value));
+%         vOutVel_1D=vOutVel(:);
+% 
+%         pause(0.01)
+%         Timer1=tic
+%         VelocityMatrix_ptr = libpointer('doublePtr', vOutVel_1D);
+%         calllib(DLLname, 'WakeVortexCalculator',WakeGeom_ptr,GammaMatrix_ptr,rc_ptr,size(GammaMatrix_ptr.Value,1),size(GammaMatrix_ptr.Value,2),VelocityMatrix_ptr);
+% 
+%         pause(0.1)
+%         calcTime=toc(Timer1);
+%         clc
+%         disp(calcTime)
+%         vOutVel=VelocityMatrix_ptr.Value;
+%         vOutVel=reshape(vOutVel,size(WakeGeom_ptr.Value));
+% 
+%        
+%         %calllib(DLLname, 'Req_isProcessing',VelocityMatrix_ptr)
+%         clear WakeGeom_ptr
+%         clear GammaMatrix_ptr
+%         clear rc_ptr
+%         clear VelocityMatrix_ptr
+% 
+%     end
+    
+
+    vOutVel = WakeVortexCalculator_mex_Fast(Wake_Geom_Position,Wake_Gamma,rc_Geom)
+    Wake_Geom_Position=Wake_Geom_Position+(vOutVel+Wake_velocity).*dt;
+
 
     %Trail Gamma 계산
     %shed Gamma 계산
@@ -382,11 +431,11 @@ V_inflow=[];
     end
     view([1,1,1])
     axis equal
-globalData=[globalData;Time,Total_Rotate,AzimuthAngle, T];
-figure(6)
-clf
-hold on
-plot(globalData(:,2),globalData(:,4))
+    globalData=[globalData;Time,Total_Rotate,AzimuthAngle, T];
+    figure(6)
+    clf
+    hold on
+    plot(globalData(:,2),globalData(:,4))
 
 
 end
@@ -431,3 +480,4 @@ figure(5)
 clf
 hold on
 plot(Data_local_raidus(:,1),Data_local_raidus(:,8),'r') % Flow
+ unloadlibrary('VortexDLL')

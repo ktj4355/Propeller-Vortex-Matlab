@@ -53,16 +53,16 @@ for idx=3:size(listing,1)
     
 
 end
-Total_DB
+Total_DB;
 % Total_DB : [thick, RE, AoA, cl, cd]
 Section1_CL=scatteredInterpolant(Total_DB(:,1),Total_DB(:,2),Total_DB(:,3),Total_DB(:,4),"linear","nearest");
 Section1_CD=scatteredInterpolant(Total_DB(:,1),Total_DB(:,2),Total_DB(:,3),Total_DB(:,5),"linear","nearest");
 
-sampleThk=10
-sampleRE=50000
-sampleAOA=0
+sampleThk=10;
+sampleRE=50000;
+sampleAOA=0;
 
-cl=Section1_CL(sampleThk,sampleRE,sampleAOA)
+cl=Section1_CL(sampleThk,sampleRE,sampleAOA);
 
 %% Section2
 listing=dir("Section2");

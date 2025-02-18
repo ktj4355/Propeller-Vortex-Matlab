@@ -20,6 +20,7 @@ extern "C" {
 	VORTEXDLL_API double dot(const double* a, const double* b);
 	VORTEXDLL_API void cross(const double* a, const double* b, double* result);
 	VORTEXDLL_API void WakeVortexCalculator(double* WakeGeom, double* GammaMatrix, double* rc, int WakeSize, int GeomPointSize, double* VelocityMatrix);
+	VORTEXDLL_API void Req_isProcessing(double* ptr);
 #ifdef __cplusplus
 }
 #endif
