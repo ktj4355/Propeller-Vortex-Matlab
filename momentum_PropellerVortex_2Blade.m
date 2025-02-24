@@ -34,13 +34,13 @@ BladeChord=inputGeom(:,3);
 alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
-RPM	    = 5000    ;  %   rev/min
+RPM	    = 8000    ;  %   rev/min
 vFree= [0,0,-5];
 nAzmuth=1;
-rc_Ratio=1;
+rc_Ratio=0.5;
 vortex_n=1.06;
 Blade   = 2;
-
+DiskArea=pi*R*R;
 
 dAngle=5; %deg
 rotSpeed=2*pi*RPM/60;  %rad/s
@@ -85,6 +85,8 @@ Panel_Beta=0.5*(Geom_Beta(1:end-1,1)+Geom_Beta(2:end,1));
 Panel_Thick=0.5*(Geom_Thick(1:end-1,1)+Geom_Thick(2:end,1));
 
 Panel_dr=abs((Geom_r(1:end-1,1)-Geom_r(2:end,1)));
+Panel_dr2=abs((Geom_r(1:end-1,1).^2-Geom_r(2:end,1).^2));
+
 Panel_ds=Panel_dr.*Panel_chord;
 Blade_Area=sum(Panel_ds);
 
@@ -269,6 +271,7 @@ timer_1=tic;
         P1=0;
         Q1=0;
         F1=0;
+        momentumTdr=0;
         v_infow_induced_x_set=I_ini_x*gamma_BoundVortex;
         v_infow_induced_y_set=I_ini_y*gamma_BoundVortex;
         v_infow_induced_z_set=I_ini_z*gamma_BoundVortex;
@@ -324,6 +327,7 @@ timer_1=tic;
             c=Panel_chord(ridx);
             ds=Panel_ds(ridx);
             dr=Panel_dr(ridx);
+            dr2=Panel_dr2(ridx);
 
 
             alpha=beta-Flow_Angle;
@@ -367,6 +371,9 @@ timer_1=tic;
             Qdr=(0.5*rho*V_inflow_sum_axis.^2).*Qc.*dr;
             Fdr=(0.5*rho*V_inflow_sum_axis.^2).*Fc.*dr;
 
+            momentumTdr=momentumTdr+(2*rho*DiskArea*V_induced_sum_axis*V_inflow_sum_axis*(dr2./(R.^2)));
+
+
             % figure(10)
             % hold on
             % quiver(-V_inflow_free_chord,-V_inflow_free_Axis,V_inflow_free_chord,V_inflow_free_Axis,1,'r')
@@ -375,7 +382,7 @@ timer_1=tic;
             % grid on
             % axis equal
             %
-            boundVortex=0.5*Cl*Veff*c;
+            boundVortex=0.5*Cl*Veff*c./Blade;
             kfac=0.01;
             gamma_BoundVortex(ridx)=gamma_BoundVortex(ridx)+(-gamma_BoundVortex(ridx)+boundVortex)*kfac;
 
@@ -385,6 +392,7 @@ timer_1=tic;
             Q1=Q1+Qdr;
             F1=F1+Fdr;
         end
+        
         %% Blade 2
         vinduced2=[];
         V_inflow2=[];
@@ -506,7 +514,7 @@ timer_1=tic;
             % grid on
             % axis equal
             %
-            boundVortex=0.5*Cl*Veff*c;
+            boundVortex=0.5*Cl*Veff*c./Blade;
             kfac=0.01;
             gamma_BoundVortex2(ridx)=gamma_BoundVortex2(ridx)+(-gamma_BoundVortex2(ridx)+boundVortex)*kfac;
 
@@ -780,7 +788,7 @@ time_Wake_Wake=toc(timer_1);
         % view([1,1,1])
 
     end
-    globalData=[globalData;Time,Total_Rotate,AzimuthAngle, T,T1,T2];
+    globalData=[globalData;Time,Total_Rotate,AzimuthAngle, T,T1,T2,momentumTdr];
 
     figure(6)
     clf
@@ -789,16 +797,20 @@ time_Wake_Wake=toc(timer_1);
     plot(globalData(:,2),globalData(:,5),'r')
 
     plot(globalData(:,2),globalData(:,6),'b')
+        plot(globalData(:,2),globalData(:,7),'g')
+
     xlabel("Total Rotation Angle (deg)")
     ylabel("Thrust(N)")
     title("Thrust Calculation")
-    legend("Total Thrust", "Blade 1 Thrust", "Blade 2 Thrust")
+    legend("Total Thrust", "Blade 1 Thrust", "Blade 2 Thrust","Momentum Thrust")
     time_Postcalc=toc(timer_1);
 
     fprintf("Iter Calculated!\n")
     fprintf("Time= %.3fsec\n",Time)
 
     fprintf("T= %.3fN  Q= %.3fNm\n",T,Q)
+    fprintf("momentumT= %.3fN\n",momentumTdr)
+
     fprintf("Now Angle= %.3fdeg  TotalAngle= %.3fdeg\n",AzimuthAngle,Total_Rotate)
     
     fprintf("IJ Matrix Calculate Time    = %.3fsec\n",time_IJcalc)
