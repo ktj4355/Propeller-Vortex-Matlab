@@ -3,7 +3,7 @@ clear
 close all
 
 
-GlobalTimer=tic
+GlobalTimer=tic;
 %% Read Aerodata
 load("InterpolatedModel.mat")
 %inducedDragClac
@@ -40,12 +40,24 @@ nAzmuth=1;
 rc_Ratio=1;
 vortex_n=1.06;
 Blade   = 2;
+
+
+dAngle=10; %deg
+rotSpeed=2*pi*RPM/60;  %rad/s
+rot_deg_speed=360*RPM/60; %deg/s
+dt=dAngle./rot_deg_speed;
+%initial Setting
+
+
 [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
 n       =RPM./60;
 %J	    =V./(n.*D);
 V_tip	=2*pi*n.*R;
 M_tip	=V_tip./340;
 Afan    =pi*R*R;
+
+
+
 figure(100)
 set( gcf, 'Position', [0 0 1800 960] )
 
@@ -103,15 +115,6 @@ R_Pitch=@(Pitch)[cosd(Pitch),  0,  sind(Pitch);
     -sind(Pitch),  0,  cosd(Pitch)];
 
 %% Position Setting
-
-
-
-
-dAngle=3; %deg
-rotSpeed=2*pi*RPM/60;  %rad/s
-rot_deg_speed=360*RPM/60; %deg/s
-dt=dAngle./rot_deg_speed;
-%initial Setting
 
 Time=0;
 Tilit_Angle=0;
@@ -562,16 +565,16 @@ while Total_Rotate<5000
 
 
     %% Wake - Wake Interaction
-    V_wake_1=zeros(size(Wake_Geom_Position))
-    V_wake_2=zeros(size(Wake_Geom_Position))
+    V_wake_1=zeros(size(Wake_Geom_Position));
+    V_wake_2=zeros(size(Wake_Geom_Position));
 
     if (Total_Rotate>180)
     vOutVel = WakeVortexCalculator_mex_Fast([Wake_Geom_Position Wake2_Geom_Position], [Wake_Gamma Wake2_Gamma],[rc_Geom rc_Geom]);
     V_wake_1=vOutVel(:,1:size(vOutVel,2)/2);
     V_wake_2=vOutVel(:,1+size(vOutVel,2)/2:end);
     else
-        Wake_Gamma=Wake_Gamma.*0
-        Wake2_Gamma=Wake2_Gamma.*0
+        Wake_Gamma=Wake_Gamma.*0;
+        Wake2_Gamma=Wake2_Gamma.*0;
     end
         
 
@@ -650,7 +653,7 @@ while Total_Rotate<5000
     AzimuthAngle=AzimuthAngle+dAngle;
     if AzimuthAngle>360
         AzimuthAngle=AzimuthAngle-360;
-        rotateCount=rotateCount+1
+        rotateCount=rotateCount+1;
     end
 
     Time=Time+dt;
@@ -687,54 +690,54 @@ while Total_Rotate<5000
      % Wake2_Gamma(end-int16(180/dAngle):end,:)=[];
      % end
 
-
-    figure(100)
-    clf
-    hold on
-
-    plot3(now_Panel_Point_Colocation(:,1),now_Panel_Point_Colocation(:,2),now_Panel_Point_Colocation(:,3),'ro-')
-    plot3(now_Panel_Point_BD(:,1),now_Panel_Point_BD(:,2),now_Panel_Point_BD(:,3),'bx-')
-    plot3(now_Panel_Point_LE(:,1),now_Panel_Point_LE(:,2),now_Panel_Point_LE(:,3),'g*-')
-    plot3(now_Panel_Point_TE(:,1),now_Panel_Point_TE(:,2),now_Panel_Point_TE(:,3),'k*-')
-    for idx=int16(length(WakeGammaset)/4):length(WakeGammaset)
-        xind=(idx-1)*3+1;
-        yind=(idx-1)*3+2;
-        zind=(idx-1)*3+3;
-
-        plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'k:')
-    end
-
-    plot3(now_Panel2_Point_Colocation(:,1),now_Panel2_Point_Colocation(:,2),now_Panel2_Point_Colocation(:,3),'ro-')
-    plot3(now_Panel2_Point_BD(:,1),now_Panel2_Point_BD(:,2),now_Panel2_Point_BD(:,3),'bx-')
-    plot3(now_Panel2_Point_LE(:,1),now_Panel2_Point_LE(:,2),now_Panel2_Point_LE(:,3),'g*-')
-    plot3(now_Panel2_Point_TE(:,1),now_Panel2_Point_TE(:,2),now_Panel2_Point_TE(:,3),'k*-')
-    for idx=int16(length(WakeGammaset)/4):length(WakeGammaset)
-        xind=(idx-1)*3+1;
-        yind=(idx-1)*3+2;
-        zind=(idx-1)*3+3;
-
-        plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'k:')
-    end
-            %plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'r:')
-        %plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'r:')
-
-        xlabel("x (m)")
-        ylabel("y (m)")
-        zlabel("z (m)")
-        title(["Propeller & Wake Structure ";"(semi-Free Wake method)"])
-        view([1,1,1])
-        axis equal
-
-        filename=sprintf("FIG_%05dRPM_%04dANGLE.png",RPM,Total_Rotate)
-        exportgraphics(figure(100),'fig1/'+filename,'Resolution',300)
-        view(unit_conv2_Chord')
-        axis equal 
-        
-        
-        filename=sprintf("FIG_%05dRPM_%04dANGLE.png",RPM,Total_Rotate)
-        exportgraphics(figure(100),'fig2/'+filename,'Resolution',300)
-view([1,1,1])
-        globalData=[globalData;Time,Total_Rotate,AzimuthAngle, T,T1,T2];
+% 
+%     figure(100)
+%     clf
+%     hold on
+% 
+%     plot3(now_Panel_Point_Colocation(:,1),now_Panel_Point_Colocation(:,2),now_Panel_Point_Colocation(:,3),'ro-')
+%     plot3(now_Panel_Point_BD(:,1),now_Panel_Point_BD(:,2),now_Panel_Point_BD(:,3),'bx-')
+%     plot3(now_Panel_Point_LE(:,1),now_Panel_Point_LE(:,2),now_Panel_Point_LE(:,3),'g*-')
+%     plot3(now_Panel_Point_TE(:,1),now_Panel_Point_TE(:,2),now_Panel_Point_TE(:,3),'k*-')
+%     for idx=int16(length(WakeGammaset)/4):length(WakeGammaset)
+%         xind=(idx-1)*3+1;
+%         yind=(idx-1)*3+2;
+%         zind=(idx-1)*3+3;
+% 
+%         plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'k:')
+%     end
+% 
+%     plot3(now_Panel2_Point_Colocation(:,1),now_Panel2_Point_Colocation(:,2),now_Panel2_Point_Colocation(:,3),'ro-')
+%     plot3(now_Panel2_Point_BD(:,1),now_Panel2_Point_BD(:,2),now_Panel2_Point_BD(:,3),'bx-')
+%     plot3(now_Panel2_Point_LE(:,1),now_Panel2_Point_LE(:,2),now_Panel2_Point_LE(:,3),'g*-')
+%     plot3(now_Panel2_Point_TE(:,1),now_Panel2_Point_TE(:,2),now_Panel2_Point_TE(:,3),'k*-')
+%     for idx=int16(length(WakeGammaset)/4):length(WakeGammaset)
+%         xind=(idx-1)*3+1;
+%         yind=(idx-1)*3+2;
+%         zind=(idx-1)*3+3;
+% 
+%         plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'k:')
+%     end
+%             %plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'r:')
+%         %plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'r:')
+% 
+%         xlabel("x (m)")
+%         ylabel("y (m)")
+%         zlabel("z (m)")
+%         title(["Propeller & Wake Structure ";"(semi-Free Wake method)"])
+%         view([1,1,1])
+%         axis equal
+% 
+%         filename=sprintf("FIG_%05dRPM_%04dANGLE.png",RPM,Total_Rotate)
+%         exportgraphics(figure(100),'fig1/'+filename,'Resolution',300)
+%         view(unit_conv2_Chord')
+%         axis equal 
+% 
+% 
+%         filename=sprintf("FIG_%05dRPM_%04dANGLE.png",RPM,Total_Rotate)
+%         exportgraphics(figure(100),'fig2/'+filename,'Resolution',300)
+% view([1,1,1])
+         globalData=[globalData;Time,Total_Rotate,AzimuthAngle, T,T1,T2];
 
         figure(6)
     clf

@@ -34,8 +34,8 @@ BladeChord=inputGeom(:,3);
 alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
-RPM	    = 8000    ;  %   rev/min
-vFree= [0,0,-0];
+RPM	    = 5000    ;  %   rev/min
+vFree= [0,5,-0];
 nAzmuth=1;
 rc_Ratio=1;
 vortex_n=1.06;
@@ -715,8 +715,8 @@ while Total_Rotate<5000
 
         plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'k:')
     end
-            plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'r:')
-        plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'r:')
+            %plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'r:')
+        %plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'r:')
 
         xlabel("x (m)")
         ylabel("y (m)")

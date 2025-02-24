@@ -3,7 +3,7 @@ clear
 close all
 
 
-GlobalTimer=tic
+GlobalTimer=tic;
 %% Read Aerodata
 load("InterpolatedModel.mat")
 %inducedDragClac
@@ -636,7 +636,7 @@ Idx=1;
     AzimuthAngle=AzimuthAngle+dAngle;
     if AzimuthAngle>360
         AzimuthAngle=AzimuthAngle-360;
-        rotateCount=rotateCount+1
+        rotateCount=rotateCount+1;
     end
 
     Time=Time+dt;

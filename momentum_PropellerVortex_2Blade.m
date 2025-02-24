@@ -3,7 +3,7 @@ clear
 close all
 
 
-GlobalTimer=tic
+GlobalTimer=tic;
 %% Read Aerodata
 load("InterpolatedModel.mat")
 %inducedDragClac
@@ -35,11 +35,20 @@ alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
 RPM	    = 5000    ;  %   rev/min
-vFree= [0,0,0];
+vFree= [0,0,-5];
 nAzmuth=1;
-rc_Ratio=0.5;
+rc_Ratio=1;
 vortex_n=1.06;
 Blade   = 2;
+
+
+dAngle=5; %deg
+rotSpeed=2*pi*RPM/60;  %rad/s
+rot_deg_speed=360*RPM/60; %deg/s
+dt=dAngle./rot_deg_speed;
+%initial Setting
+
+
 [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
 n       =RPM./60;
 %J	    =V./(n.*D);
@@ -49,7 +58,12 @@ Afan    =pi*R*R;
 
 
 
+figure(100)
+set( gcf, 'Position', [0 0 1800 960] )
 
+mkdir 'fig1'
+
+mkdir 'fig2'
 
 %% set Defalt Geometry
 Geom_rR=inputGeom(:,1);
@@ -88,7 +102,10 @@ gamma_BoundVortex=ones(size(Panel_Point_BD,1),1)*0;
 gamma_BoundVortex2=ones(size(Panel_Point_BD,1),1)*0;
 
 rc_panel=Panel_chord.*rc_Ratio;
+%rc_panel=ones(size(Panel_chord)).*mean(Panel_chord).*rc_Ratio
+
 rc_Geom=Geom_chord.*rc_Ratio;
+%rc_Geom=ones(size(Geom_chord)).*mean(Geom_chord).*rc_Ratio
 
 %% Rotation Matrix
 Rz=@(theta)[cosd(theta) -sind(theta), 0;sind(theta),cosd(theta), 0;0,0,1];
@@ -98,15 +115,6 @@ R_Pitch=@(Pitch)[cosd(Pitch),  0,  sind(Pitch);
     -sind(Pitch),  0,  cosd(Pitch)];
 
 %% Position Setting
-
-
-
-
-dAngle=10; %deg
-rotSpeed=2*pi*RPM/60;  %rad/s
-rot_deg_speed=360*RPM/60; %deg/s
-dt=dAngle./rot_deg_speed;
-%initial Setting
 
 Time=0;
 Tilit_Angle=0;
@@ -121,7 +129,9 @@ Wake2_velocity=[];
 Wake2_Gamma=[];
 globalData=[];
 rotateCount=0;
-while Total_Rotate<1500
+RotateTotalAngle=5000;
+initialAngle=0;
+while Total_Rotate<RotateTotalAngle
 
 
     now_Geom_Point_Colocation  = transpose(R_Pitch(Tilit_Angle)*Rz(AzimuthAngle)*Geom_Point_Colocation');
@@ -147,7 +157,7 @@ while Total_Rotate<1500
 
 
     %% Calculation IJ Matrix
-
+timer_1=tic;
 
     for ColloIDX=1:size(now_Panel_Point_Colocation,1) %Collocation Point Loop
         ColoP=now_Panel_Point_Colocation(ColloIDX,:);
@@ -170,7 +180,7 @@ while Total_Rotate<1500
             I_ini_y(ColloIDX,gamma_idx)=vTotal(2);
             I_ini_z(ColloIDX,gamma_idx)=vTotal(3);
 
-             gamma=gamma_Panel_ini(gamma_idx);
+            gamma=gamma_Panel_ini(gamma_idx);
 
             % induced velocity by Bound Vortex
             vind_Bound(gamma_idx,:)     =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx,:),now_Geom2_Point_BD(gamma_idx+1,:),ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
@@ -185,46 +195,51 @@ while Total_Rotate<1500
 
 
     end
+    time_IJcalc=toc(timer_1);
+    timer_1=tic;
+
     %% Wake Induced Velocity
 
-%     for ColloIDX=1:size(now_Panel_Point_Colocation,1) %Collocation Point Loop
-%         ColoP=now_Panel_Point_Colocation(ColloIDX,:);
-%         ColoP2=now_Panel2_Point_Colocation(ColloIDX,:);
-%         vind_Wake(ColloIDX,:)=[0,0,0];
-%         vind_Wake2(ColloIDX,:)=[0,0,0];
-%         for idx=1:size(Wake_Gamma,2)
-%             xind=(idx-1)*3+1;
-%             yind=(idx-1)*3+2;
-%             zind=(idx-1)*3+3;
-%             if size(Wake_Geom_Position,1)<=2; break; end
-%             for Tidx=1:size(Wake_Geom_Position,1)-1
-%                 %Blade [Wake1->Blade1]
-%                 A=Wake_Geom_Position(Tidx,xind:zind);
-%                 B=Wake_Geom_Position(Tidx+1,xind:zind);
-%                 gamma=Wake_Gamma(Tidx,idx);
-%                 vind_Wake(ColloIDX,:)=vind_Wake(ColloIDX,:)+Vortex_Vatistas(A,B,ColoP,gamma,rc_panel(gamma_idx),vortex_n);
-%                 %Blade [Wake2->Blade1]
-%                 A=Wake2_Geom_Position(Tidx,xind:zind);
-%                 B=Wake2_Geom_Position(Tidx+1,xind:zind);
-%                 gamma=Wake2_Gamma(Tidx,idx);
-%                 vind_Wake(ColloIDX,:)=vind_Wake(ColloIDX,:)+Vortex_Vatistas(A,B,ColoP,gamma,rc_panel(gamma_idx),vortex_n);
-% 
-%                 %Blade [Wake1->Blade2]
-%                 A=Wake_Geom_Position(Tidx,xind:zind);
-%                 B=Wake_Geom_Position(Tidx+1,xind:zind);
-%                 gamma=Wake_Gamma(Tidx,idx);
-%                 vind_Wake2(ColloIDX,:)=vind_Wake2(ColloIDX,:)+Vortex_Vatistas(A,B,ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
-%                 %Blade [Wake2->Blade2]
-%                 A=Wake2_Geom_Position(Tidx,xind:zind);
-%                 B=Wake2_Geom_Position(Tidx+1,xind:zind);
-%                 gamma=Wake2_Gamma(Tidx,idx);
-%                 vind_Wake2(ColloIDX,:)=vind_Wake2(ColloIDX,:)+Vortex_Vatistas(A,B,ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
-% 
-%             end
-%         end
-%     end
+    if (Total_Rotate>initialAngle)
+        for ColloIDX=1:size(now_Panel_Point_Colocation,1) %Collocation Point Loop
+            ColoP=now_Panel_Point_Colocation(ColloIDX,:);
+            ColoP2=now_Panel2_Point_Colocation(ColloIDX,:);
+            vind_Wake(ColloIDX,:)=[0,0,0];
+            vind_Wake2(ColloIDX,:)=[0,0,0];
+            for idx=1:size(Wake_Gamma,2)
+                xind=(idx-1)*3+1;
+                yind=(idx-1)*3+2;
+                zind=(idx-1)*3+3;
+                if size(Wake_Geom_Position,1)<=2; break; end
+                for Tidx=1:size(Wake_Geom_Position,1)-1
+                    %Blade [Wake1->Blade1]
+                    A=Wake_Geom_Position(Tidx,xind:zind);
+                    B=Wake_Geom_Position(Tidx+1,xind:zind);
+                    gamma=Wake_Gamma(Tidx,idx);
+                    vind_Wake(ColloIDX,:)=vind_Wake(ColloIDX,:)+Vortex_Vatistas(A,B,ColoP,gamma,rc_panel(gamma_idx),vortex_n);
+                    %Blade [Wake2->Blade1]
+                    A=Wake2_Geom_Position(Tidx,xind:zind);
+                    B=Wake2_Geom_Position(Tidx+1,xind:zind);
+                    gamma=Wake2_Gamma(Tidx,idx);
+                    vind_Wake(ColloIDX,:)=vind_Wake(ColloIDX,:)+Vortex_Vatistas(A,B,ColoP,gamma,rc_panel(gamma_idx),vortex_n);
 
+                    %Blade [Wake1->Blade2]
+                    A=Wake_Geom_Position(Tidx,xind:zind);
+                    B=Wake_Geom_Position(Tidx+1,xind:zind);
+                    gamma=Wake_Gamma(Tidx,idx);
+                    vind_Wake2(ColloIDX,:)=vind_Wake2(ColloIDX,:)+Vortex_Vatistas(A,B,ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
+                    %Blade [Wake2->Blade2]
+                    A=Wake2_Geom_Position(Tidx,xind:zind);
+                    B=Wake2_Geom_Position(Tidx+1,xind:zind);
+                    gamma=Wake2_Gamma(Tidx,idx);
+                    vind_Wake2(ColloIDX,:)=vind_Wake2(ColloIDX,:)+Vortex_Vatistas(A,B,ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
 
+                end
+            end
+        end
+    end
+    time_WakeInduced=toc(timer_1);
+    timer_1=tic;
     %% Blade Load Model
     Told=999;
     T1old=999;
@@ -283,7 +298,9 @@ while Total_Rotate<1500
             V_inflow_induced_span = dot(v_infow_induced,unit_conv_Span);
             V_inflow_induced_chord = dot(v_infow_induced,unit_conv_Chord);
 
-            v_infow_WakeInduced= 0.5.*v_infow_induced;
+
+            if (Total_Rotate>initialAngle); v_infow_WakeInduced= vind_Wake(ridx,:);
+            else ;v_infow_WakeInduced=v_infow_induced; end
             V_inflow_WakeInduced_Axis = dot(v_infow_WakeInduced,unit_conv_Axis);
             V_inflow_WakeInduced_Span = dot(v_infow_WakeInduced,unit_conv_Span);
             V_inflow_WakeInduced_Chord = dot(v_infow_WakeInduced,unit_conv_Chord);
@@ -335,7 +352,8 @@ while Total_Rotate<1500
             end
 
             Cl=inp_Cl;
-            CD=inp_Cl;
+            CD=inp_Cd;
+
 
             LD=Cl/CD;
             %Calculate BET
@@ -364,8 +382,8 @@ while Total_Rotate<1500
             Data_local_raidus1=[Data_local_raidus1;r./R,r,Flow_Angle,alpha,Re,beta,boundVortex,Tdr];
 
             T1=T1+Tdr;
-            Q1=Q1+dr;
-            F1=F1+dr;
+            Q1=Q1+Qdr;
+            F1=F1+Fdr;
         end
         %% Blade 2
         vinduced2=[];
@@ -386,9 +404,9 @@ while Total_Rotate<1500
             V_inflow_free_Axis = dot(vFree,unit_conv2_Axis);
             V_inflow_free_span = dot(vFree,unit_conv2_Span);
             V_inflow_free_chord = dot(vFree,unit_conv2_Chord);
-            
+
             % Geomtry Setting
-            
+
             r=Panel_r(ridx);
 
             V_inflow_rot_Axis=0;
@@ -404,7 +422,9 @@ while Total_Rotate<1500
             V_inflow_induced_span = dot(v_infow_induced,unit_conv2_Span);
             V_inflow_induced_chord = dot(v_infow_induced,unit_conv2_Chord);
 
-            v_infow_WakeInduced=  0.5.*v_infow_induced;
+            if (Total_Rotate>initialAngle);  v_infow_WakeInduced= vind_Wake2(ridx,:);
+            else;v_infow_WakeInduced=v_infow_induced;end
+
             V_inflow_WakeInduced_Axis = dot(v_infow_WakeInduced,unit_conv2_Axis);
             V_inflow_WakeInduced_Span = dot(v_infow_WakeInduced,unit_conv2_Span);
             V_inflow_WakeInduced_Chord = dot(v_infow_WakeInduced,unit_conv2_Chord);
@@ -456,15 +476,23 @@ while Total_Rotate<1500
             end
 
             Cl=inp_Cl;
-            CD=inp_Cl;
+            CD=inp_Cd;
 
-            LD=Cl/CD;
-            %Calculate BET
+
+            LD = Cl / CD;
+            Gam=rad2deg(atan(1 / LD));
+            Ks=0.5*rho*(V_inflow_sum_axis.^2)*Cl/((sind(Flow_Angle).^2)*cosd(Gam));
+
             gamma = rad2deg(atan(1/LD));
             K=Cl.*c./((sin(deg2rad(Flow_Angle)).^2).*cos(deg2rad(gamma)));
             Tc=K.*cos(deg2rad(Flow_Angle+gamma));
             Qc=r.*K.*sin(deg2rad(Flow_Angle+gamma));
             Fc=K.*sin(deg2rad(Flow_Angle+gamma));
+
+
+            Tds=Ks*cosd(Gam+Flow_Angle)*ds;
+            Qds=r*Ks*sind(Gam+Flow_Angle)*ds;
+            Fds=-Ks*sind(Gam+Flow_Angle)*ds;
 
             Tdr=(0.5*rho*V_inflow_sum_axis.^2).*Tc.*dr;
             Qdr=(0.5*rho*V_inflow_sum_axis.^2).*Qc.*dr;
@@ -484,18 +512,17 @@ while Total_Rotate<1500
 
             Data_local_raidus2=[Data_local_raidus2;r./R,r,Flow_Angle,alpha,Re,beta,boundVortex,Tdr];
 
-            T2=T2+Tdr;
-            Q2=Q2+dr;
-            F2=F2+dr;
+            T2=T2+Tds;
+            Q2=Q2+Qds;
+            F2=F2+Fds;
         end
 
         T=T1+T2;
-        
+        Q=Q1+Q2;
 
 
-        if abs(T1old-T1)<0.0001 & abs(T2old-T2)<0.0001 
-            disp("수렴!")
-            T
+        if abs(T1old-T1)<0.0001 & abs(T2old-T2)<0.0001
+            %
             break;
         else
 
@@ -505,51 +532,148 @@ while Total_Rotate<1500
         T2old=T2;
 
     end
-
+    time_BladeModel=toc(timer_1);
+    timer_1=tic;
 
     %% Wake Structure (Semi-Prescribed Wake Sturcture)
+
+
+
+
+
+
     %TE -> Wake Structure 추가
-        %Blade 1
+    %Blade 1
     tmp=now_Geom_Point_TE';
     wakeForm=tmp(:)';
     vinduced_Ax=vinduced1(:,3);
-    vinduced_Ax_set=transpose(vinduced_Ax.*unit_conv_Axis'+V_inflow1);
+    vinduced_Ax_set=transpose(0.*vinduced_Ax.*unit_conv_Axis'+V_inflow1);
     vinduced_Ax_GeomSet=[];
     vinduced_Ax_GeomSet=0.5.*(vinduced_Ax_set(:,2:end)+vinduced_Ax_set(:,1:end-1));
     vinduced_Ax_GeomSet=[vinduced_Ax_set(:,1), vinduced_Ax_GeomSet, vinduced_Ax_set(:,end)];
     vinduced_Ax_GeomSet=vinduced_Ax_GeomSet(:);
     WakeGammaset=[0;gamma_BoundVortex]-[gamma_BoundVortex;0];
-    WakeGammaset(1:4)=0;
+    %WakeGammaset(1:5)=0;
     Wake_Geom_Position=[wakeForm;Wake_Geom_Position]; %x y z x y z
-    Wake_velocity=[vinduced_Ax_GeomSet';Wake_velocity];
-    
+
 
     %Blade 2
     tmp=now_Geom2_Point_TE';
     wakeForm2=tmp(:)';
     vinduced2_Ax=vinduced2(:,3);
-    vinduced2_Ax_set=transpose(vinduced2_Ax.*unit_conv2_Axis'+V_inflow2);
+    vinduced2_Ax_set=transpose(0.*vinduced2_Ax.*unit_conv2_Axis'+V_inflow2);
     vinduced2_Ax_GeomSet=[];
     vinduced2_Ax_GeomSet=0.5.*(vinduced2_Ax_set(:,2:end)+vinduced2_Ax_set(:,1:end-1));
     vinduced2_Ax_GeomSet=[vinduced2_Ax_set(:,1), vinduced2_Ax_GeomSet, vinduced2_Ax_set(:,end)];
     vinduced2_Ax_GeomSet=vinduced2_Ax_GeomSet(:);
     WakeGammaset2=[0;gamma_BoundVortex2]-[gamma_BoundVortex2;0];
-     WakeGammaset2(1:4)=0;
+    %WakeGammaset2(1:5)=0;
     Wake2_Geom_Position=[wakeForm2;Wake2_Geom_Position]; %x y z x y z
-    Wake2_velocity=[vinduced2_Ax_GeomSet';Wake2_velocity];
-    
+
+
     Wake_Gamma=[WakeGammaset';Wake_Gamma];
     Wake2_Gamma=[WakeGammaset2';Wake2_Gamma];
-
-    %vOutVel = WakeVortexCalculator_mex_Fast([Wake_Geom_Position Wake2_Geom_Position], [Wake_Gamma Wake2_Gamma],[rc_Geom rc_Geom]);
-%    V_wake_1=vOutVel(:,1:size(vOutVel,2)/2);
-%    V_wake_2=vOutVel(:,1+size(vOutVel,2)/2:end);
-
-    Wake_Geom_Position=Wake_Geom_Position+(Wake_velocity).*dt;
-    Wake2_Geom_Position=Wake2_Geom_Position+(Wake2_velocity).*dt;
-
     
+    time_Wake_inducedV=toc(timer_1);
+    timer_1=tic;
 
+
+    %% Wake - Wake Interaction
+    V_wake_1=zeros(size(Wake_Geom_Position));
+    V_wake_2=zeros(size(Wake_Geom_Position));
+
+    if (Total_Rotate>initialAngle)
+        vOutVel = WakeVortexCalculator_mex_Fast([Wake_Geom_Position Wake2_Geom_Position], [Wake_Gamma Wake2_Gamma],[rc_Geom rc_Geom]);
+        V_wake_1=vOutVel(:,1:size(vOutVel,2)/2);
+        V_wake_2=vOutVel(:,1+size(vOutVel,2)/2:end);
+
+
+        Wake_velocity=[vinduced_Ax_GeomSet';Wake_velocity];
+        Wake2_velocity=[vinduced2_Ax_GeomSet';Wake2_velocity];
+    elseif Total_Rotate<180
+
+        IniAx_Vel=ones(size(vinduced_Ax_GeomSet)).*mean(vinduced_Ax_GeomSet);
+        Wake_velocity=[IniAx_Vel';Wake_velocity];
+        IniAx_Vel2=ones(size(vinduced2_Ax_GeomSet)).*mean(vinduced2_Ax_GeomSet);
+
+        Wake2_velocity=[IniAx_Vel2';Wake2_velocity];
+        Wake_Gamma=Wake_Gamma.*0.75;
+        Wake2_Gamma=Wake2_Gamma.*0.75;
+
+    else
+        Wake_velocity=[vinduced_Ax_GeomSet';Wake_velocity];
+        Wake2_velocity=[vinduced2_Ax_GeomSet';Wake2_velocity];
+    end
+
+
+time_Wake_Wake=toc(timer_1);
+    timer_1=tic;
+
+
+
+    %% Blade-Wake Interaction
+    sizeofWakemetrx=size(Wake_Geom_Position);
+    Idx=1;
+        while Idx<sizeofWakemetrx(1)*sizeofWakemetrx(2)
+            %Wake, geom에 따라 하나씩 계산
+            wakeIdx=fix(Idx/sizeofWakemetrx(2))+1;
+            geomIdx=(mod(Idx,sizeofWakemetrx(2))-1)/3+1;
+            xind=3*(geomIdx-1)+1;
+            yind=3*(geomIdx-1)+2;
+            zind=3*(geomIdx-1)+3;
+            WakeMarker=Wake_Geom_Position(wakeIdx,xind:zind);
+            WakeMarker2=Wake2_Geom_Position(wakeIdx,xind:zind);
+
+            for gamma_idx=1:size(gamma_BoundVortex,1)
+                %Blade Vortex로인한 후류 후퇴속도 계산
+                gamma=gamma_BoundVortex(gamma_idx);
+                gamma2=gamma_BoundVortex2(gamma_idx);
+                 % induced velocity by Bound Vortex
+                vind1_W1_Bound(gamma_idx,:)     =Vortex_Vatistas(now_Geom_Point_BD(gamma_idx,:),now_Geom_Point_BD(gamma_idx+1,:),WakeMarker,gamma,rc_panel(gamma_idx),vortex_n);
+                vind1_W1_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom_Point_TE(gamma_idx,:),now_Geom_Point_BD(gamma_idx,:),WakeMarker,gamma,rc_panel(gamma_idx),vortex_n);
+                vind1_W1_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom_Point_BD(gamma_idx+1,:),now_Geom_Point_TE(gamma_idx+1,:),WakeMarker,gamma,rc_panel(gamma_idx),vortex_n);
+                vind1_W2_Bound(gamma_idx,:)     =Vortex_Vatistas(now_Geom_Point_BD(gamma_idx,:),now_Geom_Point_BD(gamma_idx+1,:),WakeMarker2,gamma2,rc_panel(gamma_idx),vortex_n);
+                vind1_W2_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom_Point_TE(gamma_idx,:),now_Geom_Point_BD(gamma_idx,:),WakeMarker2,gamma2,rc_panel(gamma_idx),vortex_n);
+                vind1_W2_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom_Point_BD(gamma_idx+1,:),now_Geom_Point_TE(gamma_idx+1,:),WakeMarker2,gamma2,rc_panel(gamma_idx),vortex_n);
+
+
+
+                % induced velocity by Bound Vortex
+                vind2_W1_Bound(gamma_idx,:)     =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx,:),now_Geom2_Point_BD(gamma_idx+1,:),WakeMarker,gamma,rc_panel(gamma_idx),vortex_n);
+                vind2_W1_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom2_Point_TE(gamma_idx,:),now_Geom2_Point_BD(gamma_idx,:),WakeMarker,gamma,rc_panel(gamma_idx),vortex_n);
+                vind2_W1_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx+1,:),now_Geom2_Point_TE(gamma_idx+1,:),WakeMarker,gamma,rc_panel(gamma_idx),vortex_n);
+                vind2_W2_Bound(gamma_idx,:)     =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx,:),now_Geom2_Point_BD(gamma_idx+1,:),WakeMarker2,gamma2,rc_panel(gamma_idx),vortex_n);
+                vind2_W2_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom2_Point_TE(gamma_idx,:),now_Geom2_Point_BD(gamma_idx,:),WakeMarker2,gamma2,rc_panel(gamma_idx),vortex_n);
+                vind2_W2_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx+1,:),now_Geom2_Point_TE(gamma_idx+1,:),WakeMarker2,gamma2,rc_panel(gamma_idx),vortex_n);
+
+
+            end
+
+            Vind_w1=sum([vind1_W1_Bound;vind2_W1_Bound])...
+                +sum([vind1_W1_trLeft;vind2_W1_trLeft])...
+                +sum([vind1_W1_trRight;vind2_W1_trRight]);
+
+            Vind_w2=sum([vind1_W2_Bound;vind2_W2_Bound])...
+                +sum([vind1_W2_trLeft;vind2_W2_trLeft])...
+                +sum([vind1_W2_trRight;vind2_W2_trRight]);
+
+            V_wake_1(wakeIdx,xind:zind)= V_wake_1(wakeIdx,xind:zind)+Vind_w1;
+            V_wake_2(wakeIdx,xind:zind)= V_wake_2(wakeIdx,xind:zind)+Vind_w2;
+
+            Idx=Idx+3;
+
+
+        end
+
+
+
+    Wake_Geom_Position=Wake_Geom_Position+(Wake_velocity+V_wake_1).*dt;
+    Wake2_Geom_Position=Wake2_Geom_Position+(Wake2_velocity+V_wake_2).*dt;
+
+
+
+    time_Wake_Blade=toc(timer_1);
+    timer_1=tic;
 
     %Trail Gamma 계산
     %shed Gamma 계산
@@ -559,69 +683,133 @@ while Total_Rotate<1500
     AzimuthAngle=AzimuthAngle+dAngle;
     if AzimuthAngle>360
         AzimuthAngle=AzimuthAngle-360;
-        rotateCount=rotateCount+1
+        rotateCount=rotateCount+1;
     end
 
     Time=Time+dt;
-    
-    if Total_Rotate==360
-        size(Wake_Geom_Position,1)-int16(90/dAngle)
-    Wake_Geom_Position(end-int16(90/dAngle):end,:)=[]; %x y z x y z
-    Wake_velocity(end-int16(90/dAngle):end,:)=[];
-    Wake_Gamma(end-int16(90/dAngle):end,:)=[];
-
-    Wake2_Geom_Position(end-int16(90/dAngle):end,:)=[]; %x y z x y z
-    Wake2_velocity(end-int16(90/dAngle):end,:)=[];
-    Wake2_Gamma(end-int16(90/dAngle):end,:)=[];
+    if Total_Rotate>160 & Total_Rotate<340
+         Wake_Geom_Position(end,:)=[]; %x y z x y z
+         Wake_velocity(end,:)=[];
+         Wake_Gamma(end,:)=[];
+         
+         Wake2_Geom_Position(end,:)=[]; %x y z x y z
+         Wake2_velocity(end,:)=[];
+         Wake2_Gamma(end,:)=[];
     end
 
 
+    % if rotateCount==360
+    %     size(Wake_Geom_Position,1)-int16(180/dAngle);
+    % Wake_Geom_Position(end-int16(180/dAngle):end,:)=[]; %x y z x y z
+    % Wake_velocity(end-int16(180/dAngle):end,:)=[];
+    % Wake_Gamma(end-int16(180/dAngle):end,:)=[];
+    %
+    % Wake2_Geom_Position(end-int16(180/dAngle):end,:)=[]; %x y z x y z
+    % Wake2_velocity(end-int16(180/dAngle):end,:)=[];
+    % Wake2_Gamma(end-int16(180/dAngle):end,:)=[];
+    % end
+    %
+    % if Total_Rotate==720
+    %     size(Wake_Geom_Position,1)-int16(180/dAngle);
+    %    Wake_Geom_Position(end-int16(180/dAngle):end,:)=[]; %x y z x y z
+    % Wake_velocity(end-int16(180/dAngle):end,:)=[];
+    % Wake_Gamma(end-int16(180/dAngle):end,:)=[];
+    %
+    % Wake2_Geom_Position(end-int16(180/dAngle):end,:)=[]; %x y z x y z
+    % Wake2_velocity(end-int16(180/dAngle):end,:)=[];
+    % Wake2_Gamma(end-int16(180/dAngle):end,:)=[];
+    % end
 
-    figure(100)
-    clf
-    hold on
+    if (Total_Rotate>initialAngle)
 
-    plot3(now_Panel_Point_Colocation(:,1),now_Panel_Point_Colocation(:,2),now_Panel_Point_Colocation(:,3),'ro-')
-    plot3(now_Panel_Point_BD(:,1),now_Panel_Point_BD(:,2),now_Panel_Point_BD(:,3),'bx-')
-    plot3(now_Panel_Point_LE(:,1),now_Panel_Point_LE(:,2),now_Panel_Point_LE(:,3),'g*-')
-    plot3(now_Panel_Point_TE(:,1),now_Panel_Point_TE(:,2),now_Panel_Point_TE(:,3),'k*-')
-    for idx=1:length(WakeGammaset)
-        xind=(idx-1)*3+1;
-        yind=(idx-1)*3+2;
-        zind=(idx-1)*3+3;
+        % Wake_Geom_Position(end,:)=[]; %x y z x y z
+        % Wake_velocity(end,:)=[];
+        % Wake_Gamma(end,:)=[];
+        % Wake2_Geom_Position(end,:)=[]; %x y z x y z
+        % Wake2_velocity(end,:)=[];
+        % Wake2_Gamma(end,:)=[];
 
-        plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'k:')
+        %% Geometry Calculate
+        figure(100)
+        clf
+        hold on
+
+        plot3(now_Panel_Point_Colocation(:,1),now_Panel_Point_Colocation(:,2),now_Panel_Point_Colocation(:,3),'ro-')
+        plot3(now_Panel_Point_BD(:,1),now_Panel_Point_BD(:,2),now_Panel_Point_BD(:,3),'bx-')
+        plot3(now_Panel_Point_LE(:,1),now_Panel_Point_LE(:,2),now_Panel_Point_LE(:,3),'g*-')
+        plot3(now_Panel_Point_TE(:,1),now_Panel_Point_TE(:,2),now_Panel_Point_TE(:,3),'k*-')
+        for idx=int16(length(WakeGammaset)/4):length(WakeGammaset)
+        %for idx=length(WakeGammaset)
+            xind=(idx-1)*3+1;
+            yind=(idx-1)*3+2;
+            zind=(idx-1)*3+3;
+
+            plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'k:')
+        end
+
+        plot3(now_Panel2_Point_Colocation(:,1),now_Panel2_Point_Colocation(:,2),now_Panel2_Point_Colocation(:,3),'ro-')
+        plot3(now_Panel2_Point_BD(:,1),now_Panel2_Point_BD(:,2),now_Panel2_Point_BD(:,3),'bx-')
+        plot3(now_Panel2_Point_LE(:,1),now_Panel2_Point_LE(:,2),now_Panel2_Point_LE(:,3),'g*-')
+        plot3(now_Panel2_Point_TE(:,1),now_Panel2_Point_TE(:,2),now_Panel2_Point_TE(:,3),'k*-')
+        for idx=int16(length(WakeGammaset)/4):length(WakeGammaset)
+        %for idx=length(WakeGammaset)
+            xind=(idx-1)*3+1;
+            yind=(idx-1)*3+2;
+            zind=(idx-1)*3+3;
+
+            plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'k:')
+        end
+        %plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'r:')
+        %plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'r:')
+
+        xlabel("x (m)")
+        ylabel("y (m)")
+        zlabel("z (m)")
+        title(["Propeller & Wake Structure ";"(semi-Free Wake method)"])
+
+
+        view([1,1,1])
+        axis equal
+        %
+        % filename=sprintf("FIG_%05dRPM_%04dANGLE.png",RPM,Total_Rotate)
+        % exportgraphics(figure(100),'fig1/'+filename,'Resolution',300)
+        % view(unit_conv2_Chord')
+        % axis equal
+        % filename=sprintf("FIG_%05dRPM_%04dANGLE.png",RPM,Total_Rotate)
+        % exportgraphics(figure(100),'fig2/'+filename,'Resolution',300)
+        % view([1,1,1])
+
     end
-
-    plot3(now_Panel2_Point_Colocation(:,1),now_Panel2_Point_Colocation(:,2),now_Panel2_Point_Colocation(:,3),'ro-')
-    plot3(now_Panel2_Point_BD(:,1),now_Panel2_Point_BD(:,2),now_Panel2_Point_BD(:,3),'bx-')
-    plot3(now_Panel2_Point_LE(:,1),now_Panel2_Point_LE(:,2),now_Panel2_Point_LE(:,3),'g*-')
-    plot3(now_Panel2_Point_TE(:,1),now_Panel2_Point_TE(:,2),now_Panel2_Point_TE(:,3),'k*-')
-    for idx=1:length(WakeGammaset)
-        xind=(idx-1)*3+1;
-        yind=(idx-1)*3+2;
-        zind=(idx-1)*3+3;
-
-        plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'k:')
-    end
-    xlabel("x (m)")
-      ylabel("y (m)")
-      zlabel("z (m)")
-      title(["Propeller & Wake Structure ";"(semi-Free Wake method)"])
-    view([1,1,1])
-    axis equal
     globalData=[globalData;Time,Total_Rotate,AzimuthAngle, T,T1,T2];
+
     figure(6)
     clf
     hold on
     plot(globalData(:,2),globalData(:,4),'k')
-     plot(globalData(:,2),globalData(:,5),'r')
+    plot(globalData(:,2),globalData(:,5),'r')
 
-      plot(globalData(:,2),globalData(:,6),'b')
-      xlabel("Total Rotation Angle (deg)")
-      ylabel("Thrust(N)")
-      title("Thrust Calculation")
-      legend("Total Thrust", "Blade 1 Thrust", "Blade 2 Thrust")
+    plot(globalData(:,2),globalData(:,6),'b')
+    xlabel("Total Rotation Angle (deg)")
+    ylabel("Thrust(N)")
+    title("Thrust Calculation")
+    legend("Total Thrust", "Blade 1 Thrust", "Blade 2 Thrust")
+    time_Postcalc=toc(timer_1);
+
+    fprintf("Iter Calculated!\n")
+    fprintf("Time= %.3fsec\n",Time)
+
+    fprintf("T= %.3fN  Q= %.3fNm\n",T,Q)
+    fprintf("Now Angle= %.3fdeg  TotalAngle= %.3fdeg\n",AzimuthAngle,Total_Rotate)
+    
+    fprintf("IJ Matrix Calculate Time    = %.3fsec\n",time_IJcalc)
+    fprintf("Wake Induced Calculate Time = %.3fsec\n",time_WakeInduced)
+    fprintf("VLM Calc                    = %.3fsec\n",time_BladeModel)
+
+    fprintf("Induced Velocity Prepare    = %.3fsec\n",time_Wake_inducedV)
+    fprintf("Wake Wake Interaction Calc. = %.3fsec\n",time_Wake_Wake)
+    fprintf("Blade Wake Interaction Calc.= %.3fsec\n",time_Wake_Blade)
+    fprintf("Post Calcualte Time         = %.3fsec\n",time_Postcalc)
+    fprintf("\n\n")
 
 
 end

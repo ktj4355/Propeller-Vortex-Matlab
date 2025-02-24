@@ -398,7 +398,7 @@ while Total_Rotate<2500
 %     end
     
 
-    vOutVel = WakeVortexCalculator_mex_Fast(Wake_Geom_Position,Wake_Gamma,rc_Geom)
+    vOutVel = WakeVortexCalculator_mex_Fast(Wake_Geom_Position,Wake_Gamma,rc_Geom);
     Wake_Geom_Position=Wake_Geom_Position+(vOutVel+Wake_velocity).*dt;
 
 
