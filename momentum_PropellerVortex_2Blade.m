@@ -27,17 +27,17 @@ AR=2*(R)./bmean;
 BlendPosition=[2.85 4.65].*0.0254;
 BlendPosition=BlendPosition./R;      % Blend Position should be Converted to Nondimension
 BladeChord=inputGeom(:,3);
-
+Avarge_globalData=[];
 %% Set Operation Condition
 
 % Setup Condition
 alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
-RPM	    = 8000    ;  %   rev/min
+RPM	    = 5000    ;  %   rev/min
 vFree= [0,0,-10];
 nAzmuth=1;
-rc_Ratio=0.45;
+rc_Ratio=0.6;
 vortex_n=1.06;
 Blade   = 2;
 DiskArea=pi*R*R;
@@ -65,7 +65,23 @@ set( gcf, 'Position', [0 0 1800 960] )
 mkdir 'fig1'
 
 mkdir 'fig2'
+Blade1Alpha =[];
+Blade1Re    =[];
+Blade1Gamma =[];
+Blade1dT    =[];
+Blade1dF    =[];
+Blade1dQ    =[];
+Blade1Cl    =[];
+Blade1Cd    =[];
 
+Blade2Alpha =[];
+Blade2Re    =[];
+Blade2Gamma =[];
+Blade2dT    =[];
+Blade2dF    =[];
+Blade2dQ    =[];
+Blade2Cl    =[];
+Blade2Cd    =[];
 %% set Defalt Geometry
 Geom_rR=inputGeom(:,1);
 Geom_r=inputGeom(:,2);
@@ -179,10 +195,10 @@ while Total_Rotate<RotateTotalAngle
             vind_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom_Point_TE(gamma_idx,:),now_Geom_Point_BD(gamma_idx,:),ColoP,gamma,rc_panel(gamma_idx),vortex_n);
             vind_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom_Point_BD(gamma_idx+1,:),now_Geom_Point_TE(gamma_idx+1,:),ColoP,gamma,rc_panel(gamma_idx),vortex_n);
             vTotal=vind_Bound(gamma_idx,:)+ vind_trLeft(gamma_idx,:)+ vind_trRight(gamma_idx,:);
-            
+
             gamma=gamma_Panel_ini(gamma_idx);
 
-             % induced velocity by Bound Vortex
+            % induced velocity by Bound Vortex
             vind_Bound(gamma_idx,:)     =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx,:),now_Geom2_Point_BD(gamma_idx+1,:),ColoP,gamma,rc_panel(gamma_idx),vortex_n);
             vind_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom2_Point_TE(gamma_idx,:),now_Geom2_Point_BD(gamma_idx,:),ColoP,gamma,rc_panel(gamma_idx),vortex_n);
             vind_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx+1,:),now_Geom2_Point_TE(gamma_idx+1,:),ColoP,gamma,rc_panel(gamma_idx),vortex_n);
@@ -200,7 +216,7 @@ while Total_Rotate<RotateTotalAngle
             vind_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom_Point_TE(gamma_idx,:),now_Geom_Point_BD(gamma_idx,:),ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
             vind_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom_Point_BD(gamma_idx+1,:),now_Geom_Point_TE(gamma_idx+1,:),ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
             vTotal=vind_Bound(gamma_idx,:)+ vind_trLeft(gamma_idx,:)+ vind_trRight(gamma_idx,:);
-           
+
 
             gamma=gamma_Panel_ini(gamma_idx);
 
@@ -404,12 +420,15 @@ while Total_Rotate<RotateTotalAngle
             kfac=0.01;
             gamma_BoundVortex(ridx)=gamma_BoundVortex(ridx)+(-gamma_BoundVortex(ridx)+boundVortex)*kfac;
 
-            Data_local_raidus1=[Data_local_raidus1;r./R,r,Flow_Angle,alpha,Re,beta,boundVortex,Tdr];
+            Data_local_raidus1=[Data_local_raidus1;r./R,r,Flow_Angle,alpha,Re,beta,boundVortex,Tdr,Fdr,Qdr,Cl,CD];
 
             T1=T1+Tdr;
             Q1=Q1+Qdr;
             F1=F1+Fdr;
         end
+
+
+
 
         %% Blade 2
         vinduced2=[];
@@ -535,21 +554,33 @@ while Total_Rotate<RotateTotalAngle
             kfac=0.01;
             gamma_BoundVortex2(ridx)=gamma_BoundVortex2(ridx)+(-gamma_BoundVortex2(ridx)+boundVortex)*kfac;
 
-            Data_local_raidus2=[Data_local_raidus2;r./R,r,Flow_Angle,alpha,Re,beta,boundVortex,Tdr];
-
+            Data_local_raidus2=[Data_local_raidus2;r./R,r,Flow_Angle,alpha,Re,beta,gamma_BoundVortex2(ridx),Tdr,Fdr,Qdr,Cl,CD];
             T2=T2+Tds;
             Q2=Q2+Qds;
             F2=F2+Fds;
         end
-
+        % unit_conv_Span=(R_Pitch(Tilit_Angle)*Rz(AzimuthAngle)*unit_ground_Span);
+        % unit_conv_Chord=(R_Pitch(Tilit_Angle)*Rz(AzimuthAngle)*unit_ground_Chord);
+        % unit_conv_Axis=(R_Pitch(Tilit_Angle)*Rz(AzimuthAngle)*unit_ground_Axis);
+        %
+        % unit_conv2_Span=(R_Pitch(Tilit_Angle)*Rz(AzimuthAngle+180)*unit_ground_Span);
+        % unit_conv2_Chord=(R_Pitch(Tilit_Angle)*Rz(AzimuthAngle+180)*unit_ground_Chord);
+        % unit_conv2_Axis=(R_Pitch(Tilit_Angle)*Rz(AzimuthAngle+180)*unit_ground_Axis);
         T=T1+T2;
         Q=Q1+Q2;
 
+        Total_forceVec=T1.*unit_conv_Axis+T2.*unit_conv2_Axis-F1.*unit_conv_Chord-F2*unit_conv2_Chord;
 
         if abs(T1old-T1)<0.0001 & abs(T2old-T2)<0.0001
             %
             break;
+
+
+
+
+
         else
+            %T
 
         end
         Told=T;
@@ -561,9 +592,25 @@ while Total_Rotate<RotateTotalAngle
     timer_1=tic;
 
     %% Wake Structure (Semi-Prescribed Wake Sturcture)
+    % Data_local_raidus1=[Data_local_raidus1; r./R ,r ,Flow_Angle, alpha, Re, beta, boundVortex, Tdr,Fdr,Qdr];
 
+    Blade1Alpha =[Blade1Alpha ;Data_local_raidus1(:,4)'];
+    Blade1Re    =[Blade1Re    ;Data_local_raidus1(:,5)'];
+    Blade1Gamma =[Blade1Gamma ;Data_local_raidus1(:,7)'];
+    Blade1dT    =[Blade1dT    ;Data_local_raidus1(:,8)'];
+    Blade1dF    =[Blade1dF    ;Data_local_raidus1(:,9)'];
+    Blade1dQ    =[Blade1dQ    ;Data_local_raidus1(:,10)'];
+    Blade1Cl    =[Blade1Cl    ;Data_local_raidus1(:,11)'];
+    Blade1Cd    =[Blade1Cd    ;Data_local_raidus1(:,12)'];
 
-
+    Blade2Alpha =[Blade2Alpha ;Data_local_raidus2(:,4)'];
+    Blade2Re    =[Blade2Re    ;Data_local_raidus2(:,5)'];
+    Blade2Gamma =[Blade2Gamma ;Data_local_raidus2(:,7)'];
+    Blade2dT    =[Blade2dT    ;Data_local_raidus2(:,8)'];
+    Blade2dF    =[Blade2dF    ;Data_local_raidus2(:,9)'];
+    Blade2dQ    =[Blade2dQ    ;Data_local_raidus2(:,10)'];
+    Blade2Cl    =[Blade2Cl    ;Data_local_raidus2(:,11)'];
+    Blade2Cd    =[Blade2Cd    ;Data_local_raidus2(:,12)'];
 
 
 
@@ -578,7 +625,7 @@ while Total_Rotate<RotateTotalAngle
     vinduced_Ax_GeomSet=[vinduced_Ax_set(:,1), vinduced_Ax_GeomSet, vinduced_Ax_set(:,end)];
     vinduced_Ax_GeomSet=vinduced_Ax_GeomSet(:);
     WakeGammaset=[0;gamma_BoundVortex]-[gamma_BoundVortex;0];
-    WakeGammaset(1)=0;
+    %WakeGammaset(1)=0;
     Wake_Geom_Position=[wakeForm;Wake_Geom_Position]; %x y z x y z
 
 
@@ -592,7 +639,7 @@ while Total_Rotate<RotateTotalAngle
     vinduced2_Ax_GeomSet=[vinduced2_Ax_set(:,1), vinduced2_Ax_GeomSet, vinduced2_Ax_set(:,end)];
     vinduced2_Ax_GeomSet=vinduced2_Ax_GeomSet(:);
     WakeGammaset2=[0;gamma_BoundVortex2]-[gamma_BoundVortex2;0];
-    WakeGammaset2(1)=0;
+    % WakeGammaset2(1)=0;
     Wake2_Geom_Position=[wakeForm2;Wake2_Geom_Position]; %x y z x y z
 
 
@@ -630,8 +677,8 @@ while Total_Rotate<RotateTotalAngle
         vOutVel = WakeVortexCalculator_mex_Fast([Wake_Geom_Position Wake2_Geom_Position], [Wake_Gamma Wake2_Gamma],[rc_Geom rc_Geom]);
         V_wake_1=vOutVel(:,1:size(vOutVel,2)/2);
         V_wake_2=vOutVel(:,1+size(vOutVel,2)/2:end);
-        ini_Wake_velocity=[]
-        ini_Wake_velocity2=[]
+        ini_Wake_velocity=[];
+        ini_Wake_velocity2=[];
         while Idx<sizeofWakemetrx(1)*sizeofWakemetrx(2)
             %Wake, geom에 따라 하나씩 계산
             wakeIdx=fix(Idx/sizeofWakemetrx(2))+1;
@@ -724,16 +771,16 @@ while Total_Rotate<RotateTotalAngle
     Time=Time+dt;
     if (Total_Rotate>160 & Total_Rotate<225)|(Total_Rotate>2000)
         Wake_Geom_Position(end,:)=[]; %x y z x y z
-        
+
         Wake_Gamma(end,:)=[];
         TotalWake1(end,:)=[];
         Wake2_Geom_Position(end,:)=[]; %x y z x y z
-       
+
         Wake2_Gamma(end,:)=[];
         TotalWake2(end,:)=[];
         try
-         ini_Wake2_velocity(end,:)=[];
-        ini_Wake_velocity(end,:)=[];
+            ini_Wake2_velocity(end,:)=[];
+            ini_Wake_velocity(end,:)=[];
         end
     end
 
@@ -820,16 +867,33 @@ while Total_Rotate<RotateTotalAngle
         % view([1,1,1])
 
     end
-    globalData=[globalData;Time,Total_Rotate,AzimuthAngle, T,T1,T2,momentumTdr];
+
+    %% Post Calculate Data output
+    Fx=Total_forceVec(1);
+    Fy=Total_forceVec(2);
+    Fz=Total_forceVec(3);
+    P=Q.*2.*pi.*n;
+    globalData=[globalData;Time,Total_Rotate,AzimuthAngle,T,Q,P,T1,T2,Q1,Q2,Fx,Fy,Fz,momentumTdr];
+    if size(globalData,1)>int16(360/dAngle)
+        Avarge_Global=mean(globalData(end-int16(360/dAngle)+1:end,4:end),1);
+    else
+        Avarge_Global=globalData(end,4:end).*0;
+    end
+
+    Avarge_globalData=[Avarge_globalData;Time,Total_Rotate,AzimuthAngle,Avarge_Global];
+Tav=Avarge_Global(1);
+Qav=Avarge_Global(2);
+MTav=Avarge_Global(end);
+err=(abs(MTav-Tav)./MTav)*1000;
 
     figure(6)
     clf
     hold on
-    plot(globalData(:,2),globalData(:,4),'k')
-    plot(globalData(:,2),globalData(:,5),'r')
+    plot(globalData(:,2),Avarge_globalData(:,4),'k')
+    plot(globalData(:,2),Avarge_globalData(:,7),'r')
 
-    plot(globalData(:,2),globalData(:,6),'b')
-    plot(globalData(:,2),globalData(:,7),'g')
+    plot(globalData(:,2),Avarge_globalData(:,8),'b')
+    plot(globalData(:,2),Avarge_globalData(:,end),'g')
 
     xlabel("Total Rotation Angle (deg)")
     ylabel("Thrust(N)")
@@ -841,6 +905,8 @@ while Total_Rotate<RotateTotalAngle
     fprintf("Time= %.3fsec\n",Time)
 
     fprintf("T= %.3fN  Q= %.3fNm\n",T,Q)
+        fprintf("T(avarage)= %.3fN | Q(avarge)= %.3fNm | err(Permil)= %.3f‰\n",Tav,Qav,err)
+
     fprintf("momentumT= %.3fN\n",momentumTdr)
 
     fprintf("Now Angle= %.3fdeg  TotalAngle= %.3fdeg\n",AzimuthAngle,Total_Rotate)
@@ -854,6 +920,49 @@ while Total_Rotate<RotateTotalAngle
     fprintf("Blade Wake Interaction Calc.= %.3fsec\n",time_Wake_Blade)
     fprintf("Post Calcualte Time         = %.3fsec\n",time_Postcalc)
     fprintf("\n\n")
+
+
+    OutputBlade1=...
+        {
+        globalData
+        Avarge_globalData
+        Blade1Alpha
+        Blade1Re
+        Blade1Gamma
+        Blade1dT
+        Blade1dF
+        Blade1dQ
+        Blade1Cl
+        Blade1Cd
+
+
+        };
+
+    OutputBlade2=...
+        {
+        globalData
+        Avarge_globalData
+        Blade2Alpha
+        Blade2Re
+        Blade2Gamma
+        Blade2dT
+        Blade2dF
+        Blade2dQ
+        Blade2Cl
+        Blade2Cd
+
+
+        };
+
+    OutputVortexSturcture=...
+        {
+        globalData
+        Wake_Geom_Position
+        Wake2_Geom_Position
+        Wake_Gamma
+        Wake_Gamma
+        rc_panel
+        };
 
 
 end
