@@ -34,10 +34,10 @@ BladeChord=inputGeom(:,3);
 alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
-RPM	    = 5000    ;  %   rev/min
-vFree= [0,5,0];
+RPM	    = 8000    ;  %   rev/min
+vFree= [0,0,-10];
 nAzmuth=1;
-rc_Ratio=0.5;
+rc_Ratio=0.45;
 vortex_n=1.06;
 Blade   = 2;
 DiskArea=pi*R*R;
@@ -47,7 +47,8 @@ rotSpeed=2*pi*RPM/60;  %rad/s
 rot_deg_speed=360*RPM/60; %deg/s
 dt=dAngle./rot_deg_speed;
 %initial Setting
-
+RotateTotalAngle=8000;
+initialAngle=0;
 
 [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
 n       =RPM./60;
@@ -131,8 +132,7 @@ ini_Wake2_velocity=[];
 Wake2_Gamma=[];
 globalData=[];
 rotateCount=0;
-RotateTotalAngle=5000;
-initialAngle=500;
+
 TotalWake1=zeros(size(Wake_Geom_Position));
 TotalWake2=zeros(size(Wake2_Geom_Position));
 while Total_Rotate<RotateTotalAngle
@@ -179,10 +179,28 @@ while Total_Rotate<RotateTotalAngle
             vind_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom_Point_TE(gamma_idx,:),now_Geom_Point_BD(gamma_idx,:),ColoP,gamma,rc_panel(gamma_idx),vortex_n);
             vind_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom_Point_BD(gamma_idx+1,:),now_Geom_Point_TE(gamma_idx+1,:),ColoP,gamma,rc_panel(gamma_idx),vortex_n);
             vTotal=vind_Bound(gamma_idx,:)+ vind_trLeft(gamma_idx,:)+ vind_trRight(gamma_idx,:);
+            
+            gamma=gamma_Panel_ini(gamma_idx);
+
+             % induced velocity by Bound Vortex
+            vind_Bound(gamma_idx,:)     =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx,:),now_Geom2_Point_BD(gamma_idx+1,:),ColoP,gamma,rc_panel(gamma_idx),vortex_n);
+            vind_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom2_Point_TE(gamma_idx,:),now_Geom2_Point_BD(gamma_idx,:),ColoP,gamma,rc_panel(gamma_idx),vortex_n);
+            vind_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx+1,:),now_Geom2_Point_TE(gamma_idx+1,:),ColoP,gamma,rc_panel(gamma_idx),vortex_n);
+            vTotal=vTotal+vind_Bound(gamma_idx,:)+ vind_trLeft(gamma_idx,:)+ vind_trRight(gamma_idx,:);
 
             I_ini_x(ColloIDX,gamma_idx)=vTotal(1);
             I_ini_y(ColloIDX,gamma_idx)=vTotal(2);
             I_ini_z(ColloIDX,gamma_idx)=vTotal(3);
+
+
+            gamma=gamma_Panel_ini(gamma_idx);
+
+            % induced velocity by Bound Vortex
+            vind_Bound(gamma_idx,:)     =Vortex_Vatistas(now_Geom_Point_BD(gamma_idx,:),now_Geom_Point_BD(gamma_idx+1,:),ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
+            vind_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom_Point_TE(gamma_idx,:),now_Geom_Point_BD(gamma_idx,:),ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
+            vind_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom_Point_BD(gamma_idx+1,:),now_Geom_Point_TE(gamma_idx+1,:),ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
+            vTotal=vind_Bound(gamma_idx,:)+ vind_trLeft(gamma_idx,:)+ vind_trRight(gamma_idx,:);
+           
 
             gamma=gamma_Panel_ini(gamma_idx);
 
@@ -190,7 +208,7 @@ while Total_Rotate<RotateTotalAngle
             vind_Bound(gamma_idx,:)     =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx,:),now_Geom2_Point_BD(gamma_idx+1,:),ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
             vind_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom2_Point_TE(gamma_idx,:),now_Geom2_Point_BD(gamma_idx,:),ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
             vind_trRight(gamma_idx,:)   =Vortex_Vatistas(now_Geom2_Point_BD(gamma_idx+1,:),now_Geom2_Point_TE(gamma_idx+1,:),ColoP2,gamma,rc_panel(gamma_idx),vortex_n);
-            vTotal=vind_Bound(gamma_idx,:)+ vind_trLeft(gamma_idx,:)+ vind_trRight(gamma_idx,:);
+            vTotal=vTotal+vind_Bound(gamma_idx,:)+ vind_trLeft(gamma_idx,:)+ vind_trRight(gamma_idx,:);
 
             I_ini2_x(ColloIDX,gamma_idx)=vTotal(1);
             I_ini2_y(ColloIDX,gamma_idx)=vTotal(2);
@@ -560,7 +578,7 @@ while Total_Rotate<RotateTotalAngle
     vinduced_Ax_GeomSet=[vinduced_Ax_set(:,1), vinduced_Ax_GeomSet, vinduced_Ax_set(:,end)];
     vinduced_Ax_GeomSet=vinduced_Ax_GeomSet(:);
     WakeGammaset=[0;gamma_BoundVortex]-[gamma_BoundVortex;0];
-    %WakeGammaset(1:5)=0;
+    WakeGammaset(1)=0;
     Wake_Geom_Position=[wakeForm;Wake_Geom_Position]; %x y z x y z
 
 
@@ -574,7 +592,7 @@ while Total_Rotate<RotateTotalAngle
     vinduced2_Ax_GeomSet=[vinduced2_Ax_set(:,1), vinduced2_Ax_GeomSet, vinduced2_Ax_set(:,end)];
     vinduced2_Ax_GeomSet=vinduced2_Ax_GeomSet(:);
     WakeGammaset2=[0;gamma_BoundVortex2]-[gamma_BoundVortex2;0];
-    %WakeGammaset2(1:5)=0;
+    WakeGammaset2(1)=0;
     Wake2_Geom_Position=[wakeForm2;Wake2_Geom_Position]; %x y z x y z
 
 
@@ -706,13 +724,17 @@ while Total_Rotate<RotateTotalAngle
     Time=Time+dt;
     if (Total_Rotate>160 & Total_Rotate<225)|(Total_Rotate>2000)
         Wake_Geom_Position(end,:)=[]; %x y z x y z
-        ini_Wake_velocity(end,:)=[];
+        
         Wake_Gamma(end,:)=[];
         TotalWake1(end,:)=[];
         Wake2_Geom_Position(end,:)=[]; %x y z x y z
-        ini_Wake2_velocity(end,:)=[];
+       
         Wake2_Gamma(end,:)=[];
         TotalWake2(end,:)=[];
+        try
+         ini_Wake2_velocity(end,:)=[];
+        ini_Wake_velocity(end,:)=[];
+        end
     end
 
 
@@ -812,7 +834,7 @@ while Total_Rotate<RotateTotalAngle
     xlabel("Total Rotation Angle (deg)")
     ylabel("Thrust(N)")
     title("Thrust Calculation")
-    legend("Total Thrust", "Blade 1 Thrust", "Blade 2 Thrust","Momentum Thrust")
+    legend("Total Thrust", "Blade 1 Thrust", "Blade 2 Thrust","Momentum Thrust",'Location','best')
     time_Postcalc=toc(timer_1);
 
     fprintf("Iter Calculated!\n")
