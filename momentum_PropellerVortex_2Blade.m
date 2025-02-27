@@ -35,7 +35,7 @@ alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
 RPM	    = 8000    ;  %   rev/min
-vFree= [0,0,-5];
+vFree= [5,0,0];
 nAzmuth=1;
 rc_Ratio=0.5;
 vortex_n=2;
@@ -47,8 +47,8 @@ rotSpeed=2*pi*RPM/60;  %rad/s
 rot_deg_speed=360*RPM/60; %deg/s
 dt=dAngle./rot_deg_speed;
 %initial Setting
-RotateTotalAngle=8000;
-initialAngle=0;
+RotateTotalAngle=3000;
+initialAngle=1000;
 
 [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
 n       =RPM./60;
@@ -969,7 +969,7 @@ while Total_Rotate<RotateTotalAngle
         Wake_Geom_Position
         Wake2_Geom_Position
         Wake_Gamma
-        Wake_Gamma
+        Wake2_Gamma
         rc_panel
         };
 
