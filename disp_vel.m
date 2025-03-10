@@ -16,7 +16,7 @@ inputGeom=readmatrix("Geometry.xlsx");
 Geom_chord=inputGeom(:,3);
 rc_Ratio=0.5
 rc_Geom=Geom_chord.*rc_Ratio;
-vortex_n=1.06
+vortex_n=2
 
 [filename, path] =uigetfile(".mat")
 
@@ -37,8 +37,8 @@ rc_panel=OutputVortexSturcture{6}
 
 % 1. 계산할 좌표 그리드 생성 (y는 0으로 고정)
 % xy plane
-xpos = linspace(-0.2, 0.2, 100);
-ypos = linspace(-0.2, 0.2, 100);
+xpos = linspace(-0.2, 0.2, 250);
+ypos = linspace(-0.2, 0.2, 250);
 [X, Y] = meshgrid(xpos, ypos);
 zpos=-0.1
 Z = zpos+zeros(size(X));  % ypos = 0
@@ -123,7 +123,7 @@ Pmin=min(P_grid,[],'all')
 figure(11)
 clf
 hold on
-contourf(X_grid, Z_grid, Vmag_grid,1000,  "lineColor",'none');  % 50개의 contour level
+contourf(X_grid, Z_grid, Vmag_grid,100,  "lineColor",'none');  % 50개의 contour level
 colormap(turbo)
     clim("auto")
 
@@ -136,7 +136,7 @@ title("Velocity Magnitude Contour(m/s)")
 figure(12)
 clf
 hold on
-quiver(X_grid, Z_grid, Vx_grid, Vz_grid,0.75,'k')
+quiver(X_grid, Z_grid, Vx_grid, Vz_grid,0.5,'k')
 xlabel('x'); ylabel('z');
 title('Vortex에 의한 유도속도 (x-z 평면)');
 axis equal
@@ -156,7 +156,7 @@ title("Gauge Pressure Contour(Pa)")
 figure(14)
 clf
 hold on
-contourf(X_grid, Z_grid, abs(Vz_grid),1000,  "lineColor",'none');  % 50개의 contour level
+contourf(X_grid, Z_grid, abs(Vz_grid),100,  "lineColor",'none');  % 50개의 contour level
 colormap(turbo)
     clim("auto")
 

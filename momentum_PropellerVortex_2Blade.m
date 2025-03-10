@@ -35,8 +35,8 @@ alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
 RPM	    = 8000    ;  %   rev/min
-vFree= [5,0,0];
-nAzmuth=1;
+vFree= [0,0,0];
+nAzmuth=1.06;
 rc_Ratio=0.5;
 vortex_n=2;
 Blade   = 2;
@@ -47,8 +47,8 @@ rotSpeed=2*pi*RPM/60;  %rad/s
 rot_deg_speed=360*RPM/60; %deg/s
 dt=dAngle./rot_deg_speed;
 %initial Setting
-RotateTotalAngle=3000;
-initialAngle=1000;
+RotateTotalAngle=4000;
+initialAngle=0;
 
 [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
 n       =RPM./60;
@@ -121,10 +121,10 @@ gamma_BoundVortex=ones(size(Panel_Point_BD,1),1)*0;
 gamma_BoundVortex2=ones(size(Panel_Point_BD,1),1)*0;
 
 rc_panel=Panel_chord.*rc_Ratio;
-%rc_panel=ones(size(Panel_chord)).*mean(Panel_chord).*rc_Ratio
+rc_panel=ones(size(Panel_chord)).*mean(Panel_chord).*rc_Ratio
 
 rc_Geom=Geom_chord.*rc_Ratio;
-%rc_Geom=ones(size(Geom_chord)).*mean(Geom_chord).*rc_Ratio
+rc_Geom=ones(size(Geom_chord)).*mean(Geom_chord).*rc_Ratio
 
 %% Rotation Matrix
 Rz=@(theta)[cosd(theta) -sind(theta), 0;sind(theta),cosd(theta), 0;0,0,1];
@@ -736,9 +736,10 @@ while Total_Rotate<RotateTotalAngle
     else
         vinf=sqrt(sum(V_inflow2.^2,2));
         vinf=[vinf(1);vinf];
-        C=2.*0.5.*(T+T)./(rho.*DiskArea);
-        V_wake=-transpose((0.5.*(-vinf+sqrt(vinf.^2+C))+vinf).*unit_conv_Axis');
-        IniAx_Vel=V_wake(:)+vinduced_Ax_GeomSet;
+        C=2.*0.5.*(T+momentumTdr)./(rho.*DiskArea);
+         V_wake=-transpose((0.5.*(-vinf+sqrt(vinf.^2+C))).*unit_conv_Axis');
+         IniAx_Vel=V_wake(:)+vinduced_Ax_GeomSet;
+        % IniAx_Vel=vinduced_Ax_GeomSet;
         ini_Wake_velocity=[IniAx_Vel';ini_Wake_velocity];
         ini_Wake2_velocity=[IniAx_Vel';ini_Wake2_velocity];
         TotalWake1=ini_Wake_velocity;
@@ -886,6 +887,12 @@ while Total_Rotate<RotateTotalAngle
     Avarge_globalData=[Avarge_globalData;Time,Total_Rotate,AzimuthAngle,Avarge_Global];
     Tav=Avarge_Global(1);
     Qav=Avarge_Global(2);
+    Pav=Avarge_Global(3);
+
+    FxAver=Avarge_Global(8);
+    FyAver=Avarge_Global(9);
+    FzAver=Avarge_Global(10);
+
     MTav=Avarge_Global(end);
     err=(abs(MTav-Tav)./MTav)*1000;
 
@@ -914,7 +921,8 @@ while Total_Rotate<RotateTotalAngle
     fprintf("Time= %.3fsec\n",Time)
 
     fprintf("T= %.3fN  Q= %.3fNm\n",T,Q)
-    fprintf("T(avarage)= %.3fN | Q(avarge)= %.3fNm | err(Permil)= %.3f‰\n",Tav,Qav,err)
+    fprintf("T(avarage)= %.3fN | Q(avarge)= %.3fNm | P(avearge)= %.3f‰\n",Tav,Qav,err)
+    fprintf("Excell Form : %f, %f, %f, %f, %f, %f\n",Tav,Qav,Pav,FxAver,FyAver,FzAver)
 
     fprintf("momentumT= %.3fN\n",momentumTdr)
 
@@ -966,6 +974,7 @@ while Total_Rotate<RotateTotalAngle
     OutputVortexSturcture=...
         {
         globalData
+        Avarge_globalData
         Wake_Geom_Position
         Wake2_Geom_Position
         Wake_Gamma
@@ -1012,53 +1021,30 @@ hold on
 plot(Data_local_raidus1(:,1),Data_local_raidus1(:,8),'r') % Flow
 clc
 Clac_time=toc(GlobalTimer);
-fprintf("Thrust : %.3f N\n",T)
+fprintf("Calculate Done!!\n")
 fprintf("Calculate Time : %.3f s\n",Clac_time)
+
+  fprintf("Time= %.3fsec\n",Time)
+
+    fprintf("T= %.3fN  Q= %.3fNm\n",T,Q)
+    fprintf("T(avarage)= %.3fN | Q(avarge)= %.3fNm | P(avearge)= %.3f‰\n",Tav,Qav,err)
+    fprintf("Excell Form : %f, %f, %f, %f, %f, %f\n",Tav,Qav,Pav,FxAver,FyAver,FzAver)
+
+    fprintf("momentumT= %.3fN\n",momentumTdr)
+
+    fprintf("Now Angle= %.3fdeg  TotalAngle= %.3fdeg\n",AzimuthAngle,Total_Rotate)
+
+    fprintf("IJ Matrix Calculate Time    = %.3fsec\n",time_IJcalc)
+    fprintf("Wake Induced Calculate Time = %.3fsec\n",time_WakeInduced)
+    fprintf("VLM Calc                    = %.3fsec\n",time_BladeModel)
+
+    fprintf("Induced Velocity Prepare    = %.3fsec\n",time_Wake_inducedV)
+    fprintf("Wake Wake Interaction Calc. = %.3fsec\n",time_Wake_Wake)
+    fprintf("Blade Wake Interaction Calc.= %.3fsec\n",time_Wake_Blade)
+    fprintf("Post Calcualte Time         = %.3fsec\n",time_Postcalc)
+    fprintf("\n\n")
 %%
 
-%% Zx Plane Velocity contour
-
-xpos=linspace(-0.2,0.2,100);
-zpos=linspace(-0.5,0.2,100);
-ypos=0;
-vout=[];
-for xindPos= 1:length(xpos)
-    xindPos;
-    for yindPos= 1:length(ypos)
-        for zindPos= 1:length(zpos)
-            
-            x=xpos(xindPos);
-            y=ypos(yindPos);
-            z=zpos(zindPos);
-            Loc_Position=[x,y,z];
-            vind_Wake=[0,0,0];
-            for idx=1:size(Wake_Gamma,2)
-                xind=(idx-1)*3+1;
-                yind=(idx-1)*3+2;
-                zind=(idx-1)*3+3;
-                if size(Wake_Geom_Position,1)<=2; break; end
-                for Tidx=1:size(Wake_Geom_Position,1)-1
-                    %Blade [Wake1->Blade1]
-                    A=Wake_Geom_Position(Tidx,xind:zind);
-                    B=Wake_Geom_Position(Tidx+1,xind:zind);
-                    gamma=Wake_Gamma(Tidx,idx);
-                    vind_Wake=vind_Wake+Vortex_Vatistas(A,B,Loc_Position,gamma,rc_panel(gamma_idx),vortex_n);
-                    %Blade [Wake2->Blade1]
-                    A=Wake2_Geom_Position(Tidx,xind:zind);
-                    B=Wake2_Geom_Position(Tidx+1,xind:zind);
-                    gamma=Wake2_Gamma(Tidx,idx);
-                    vind_Wake=vind_Wake+Vortex_Vatistas(A,B,Loc_Position,gamma,rc_panel(gamma_idx),vortex_n);
-                end
-            end
-            vout=[vout;x,y,z,vind_Wake,norm(vind_Wake)];
-
-        end
-    end
-end
-figure(11)
-clf
-hold on
-quiver(vout(:,1),vout(:,3),vout(:,4),vout(:,6))
 
 
 
