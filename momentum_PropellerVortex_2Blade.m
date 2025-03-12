@@ -35,14 +35,14 @@ alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
 RPM	    = 8000    ;  %   rev/min
-vFree= [0,0,0];
-nAzmuth=1.06;
+vFree= [0,0,4];
+nAzmuth=2;
 rc_Ratio=0.5;
-vortex_n=2;
+vortex_n=1;
 Blade   = 2;
 DiskArea=pi*R*R;
 
-dAngle=10; %deg
+dAngle=5; %deg
 rotSpeed=2*pi*RPM/60;  %rad/s
 rot_deg_speed=360*RPM/60; %deg/s
 dt=dAngle./rot_deg_speed;
@@ -121,10 +121,10 @@ gamma_BoundVortex=ones(size(Panel_Point_BD,1),1)*0;
 gamma_BoundVortex2=ones(size(Panel_Point_BD,1),1)*0;
 
 rc_panel=Panel_chord.*rc_Ratio;
-rc_panel=ones(size(Panel_chord)).*mean(Panel_chord).*rc_Ratio
+%rc_panel=ones(size(Panel_chord)).*mean(Panel_chord).*rc_Ratio
 
 rc_Geom=Geom_chord.*rc_Ratio;
-rc_Geom=ones(size(Geom_chord)).*mean(Geom_chord).*rc_Ratio
+%rc_Geom=ones(size(Geom_chord)).*mean(Geom_chord).*rc_Ratio
 
 %% Rotation Matrix
 Rz=@(theta)[cosd(theta) -sind(theta), 0;sind(theta),cosd(theta), 0;0,0,1];
@@ -151,6 +151,10 @@ rotateCount=0;
 
 TotalWake1=zeros(size(Wake_Geom_Position));
 TotalWake2=zeros(size(Wake2_Geom_Position));
+dT_R1_old=999;
+dT_R1=999;
+dT_R2_old=999;
+dT_R2=999;
 while Total_Rotate<RotateTotalAngle
 
 
@@ -299,9 +303,16 @@ while Total_Rotate<RotateTotalAngle
 
     vinduced=[];
 
+
+        dT_R1_old=999;
+        dT_R2_old=999;
     %gamma=0.5Veff*cl
     for iter=1:1000
         %% Blade 1
+        dT_R1=[];
+        dT_R2=[];
+
+
         vinduced1=[];
         V_inflow1=[];
         T1=0;
@@ -314,9 +325,11 @@ while Total_Rotate<RotateTotalAngle
         v_infow_induced_z_set=I_ini_z*gamma_BoundVortex;
 
         Data_local_raidus1=[];
+        
+
         for ridx=1:size(now_Panel_Point_Colocation,1)
 
-
+        
 
             V_inflow_free_Axis = dot(vFree,unit_conv_Axis);
             V_inflow_free_span = dot(vFree,unit_conv_Span);
@@ -375,20 +388,18 @@ while Total_Rotate<RotateTotalAngle
 
             if BlendPosition(1)>=rR_local
                 airfoil=1;
-                CL0=Section1_CL(ThickRatio, Re ,0);
-                inp_Cl=Section1_CL(ThickRatio, Re ,alpha);
-                inp_Cd=Section1_CD(ThickRatio, Re ,alpha);
+                inp_Cl=BLD_CL(0,ThickRatio, Re ,alpha);
+                inp_Cd=BLD_CD(0,ThickRatio, Re ,alpha);
             elseif BlendPosition(2)<=rR_local
                 airfoil=2;
-                CL0=Section1_CL(ThickRatio, Re ,0);
-                inp_Cl=Section2_CL(ThickRatio ,Re, alpha);
-                inp_Cd=Section2_CD(ThickRatio, Re, alpha);
+                inp_Cl=BLD_CL(1,ThickRatio ,Re, alpha);
+                inp_Cd=BLD_CD(1,ThickRatio, Re, alpha);
             else
                 airfoil=0;
                 BR=abs((rR_local-BlendPosition(1))./(BlendPosition(2)-BlendPosition(1)));
-                CL0=BLD_CL(BR, Re ,0);
-                inp_Cl=BLD_CL(BR, Re ,alpha);
-                inp_Cd=BLD_CD(BR ,Re, alpha);
+                %CL0=BLD_CL(BR, Re ,0);
+                inp_Cl=BLD_CL(BR,ThickRatio, Re ,alpha);
+                inp_Cd=BLD_CD(BR ,ThickRatio,Re, alpha);
             end
 
             Cl=inp_Cl;
@@ -419,7 +430,7 @@ while Total_Rotate<RotateTotalAngle
             % axis equal
             %
             boundVortex=0.5*Cl*Veff*c./Blade;
-            kfac=0.01;
+            kfac=0.05;
             gamma_BoundVortex(ridx)=gamma_BoundVortex(ridx)+(-gamma_BoundVortex(ridx)+boundVortex)*kfac;
 
             Data_local_raidus1=[Data_local_raidus1;r./R,r,Flow_Angle,alpha,Re,beta,boundVortex,Tdr,Fdr,Qdr,Cl,CD];
@@ -427,6 +438,8 @@ while Total_Rotate<RotateTotalAngle
             T1=T1+Tdr;
             Q1=Q1+Qdr;
             F1=F1+Fdr;
+
+            dT_R1=[dT_R1;Tdr];
         end
 
 
@@ -505,22 +518,19 @@ while Total_Rotate<RotateTotalAngle
 
             if BlendPosition(1)>=rR_local
                 airfoil=1;
-                CL0=Section1_CL(ThickRatio, Re ,0);
-                inp_Cl=Section1_CL(ThickRatio, Re ,alpha);
-                inp_Cd=Section1_CD(ThickRatio, Re ,alpha);
+                inp_Cl=BLD_CL(0,ThickRatio, Re ,alpha);
+                inp_Cd=BLD_CD(0,ThickRatio, Re ,alpha);
             elseif BlendPosition(2)<=rR_local
                 airfoil=2;
-                CL0=Section1_CL(ThickRatio, Re ,0);
-                inp_Cl=Section2_CL(ThickRatio ,Re, alpha);
-                inp_Cd=Section2_CD(ThickRatio, Re, alpha);
+                inp_Cl=BLD_CL(1,ThickRatio ,Re, alpha);
+                inp_Cd=BLD_CD(1,ThickRatio, Re, alpha);
             else
                 airfoil=0;
                 BR=abs((rR_local-BlendPosition(1))./(BlendPosition(2)-BlendPosition(1)));
-                CL0=BLD_CL(BR, Re ,0);
-                inp_Cl=BLD_CL(BR, Re ,alpha);
-                inp_Cd=BLD_CD(BR ,Re, alpha);
+                %CL0=BLD_CL(BR, Re ,0);
+                inp_Cl=BLD_CL(BR,ThickRatio, Re ,alpha);
+                inp_Cd=BLD_CD(BR ,ThickRatio,Re, alpha);
             end
-
             Cl=inp_Cl;
             CD=inp_Cd;
 
@@ -553,13 +563,15 @@ while Total_Rotate<RotateTotalAngle
             % axis equal
             %
             boundVortex=0.5*Cl*Veff*c./Blade;
-            kfac=0.01;
+            kfac=0.05;
             gamma_BoundVortex2(ridx)=gamma_BoundVortex2(ridx)+(-gamma_BoundVortex2(ridx)+boundVortex)*kfac;
 
             Data_local_raidus2=[Data_local_raidus2;r./R,r,Flow_Angle,alpha,Re,beta,gamma_BoundVortex2(ridx),Tdr,Fdr,Qdr,Cl,CD];
             T2=T2+Tds;
             Q2=Q2+Qds;
             F2=F2+Fds;
+           dT_R2=[dT_R2;Tds];
+
         end
         % unit_conv_Span=(R_Pitch(Tilit_Angle)*Rz(AzimuthAngle)*unit_ground_Span);
         % unit_conv_Chord=(R_Pitch(Tilit_Angle)*Rz(AzimuthAngle)*unit_ground_Chord);
@@ -572,8 +584,23 @@ while Total_Rotate<RotateTotalAngle
         Q=Q1+Q2;
 
         Total_forceVec=T1.*unit_conv_Axis+T2.*unit_conv2_Axis-F1.*unit_conv_Chord-F2*unit_conv2_Chord;
+% 
+%         if abs(T1old-T1)<0.00001 & abs(T2old-T2)<0.00001
+%             %
+%             break;
+% 
+% 
+% 
+% 
+% 
+%         else
+%             %T
+% 
+%         end
+cri1=max(abs(dT_R1_old-dT_R1));
+cri2=max(abs(dT_R2_old-dT_R2)) ;
+        if cri1<0.00001 & cri2<0.00001
 
-        if abs(T1old-T1)<0.0001 & abs(T2old-T2)<0.0001
             %
             break;
 
@@ -582,9 +609,13 @@ while Total_Rotate<RotateTotalAngle
 
 
         else
-            %T
+            dT_R1_old=dT_R1;
+            dT_R2_old=dT_R2;
+            %disp("수렴하지 않았습니다.");
 
         end
+
+
         Told=T;
         T1old=T1;
         T2old=T2;
@@ -919,6 +950,8 @@ while Total_Rotate<RotateTotalAngle
 
     fprintf("Iter Calculated!\n")
     fprintf("Time= %.3fsec\n",Time)
+    fprintf("Criteria1 : %f\n",cri1)
+    fprintf("Criteria2 : %f\n",cri2)
 
     fprintf("T= %.3fN  Q= %.3fNm\n",T,Q)
     fprintf("T(avarage)= %.3fN | Q(avarge)= %.3fNm | P(avearge)= %.3f‰\n",Tav,Qav,err)
@@ -981,7 +1014,25 @@ while Total_Rotate<RotateTotalAngle
         Wake2_Gamma
         rc_panel
         };
+    figure(4)
+clf
+hold on
+plot(Data_local_raidus1(:,1),Data_local_raidus1(:,3),'r') % Flow
+plot(Data_local_raidus1(:,1),Data_local_raidus1(:,4),'g') % alpha
+plot(Data_local_raidus1(:,1),Data_local_raidus1(:,6),'b') %beta
+legend("Flow","Alpha","beta")
 
+
+figure(5)
+clf
+hold on
+plot(Data_local_raidus1(:,1),Data_local_raidus1(:,8),'r') % Flow
+
+
+figure(7)
+clf
+hold on
+plot(Data_local_raidus1(:,1),Blade1Re(end,:),'r') % Flow
 
 end
 

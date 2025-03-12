@@ -16,7 +16,7 @@ inputGeom=readmatrix("Geometry.xlsx");
 Geom_chord=inputGeom(:,3);
 rc_Ratio=0.5
 rc_Geom=Geom_chord.*rc_Ratio;
-vortex_n=2
+vortex_n=1.06
 
 [filename, path] =uigetfile(".mat")
 
@@ -24,27 +24,34 @@ fullname=[path,filename]
 
 load(fullname)
 
-
+if size(OutputVortexSturcture,1)==6
 globalData=OutputVortexSturcture{1}
 Wake_Geom_Position=OutputVortexSturcture{2}
 Wake2_Geom_Position=OutputVortexSturcture{3}
 Wake_Gamma=OutputVortexSturcture{4}
 Wake2_Gamma=OutputVortexSturcture{5}
 rc_panel=OutputVortexSturcture{6}
-
+else
+globalData=OutputVortexSturcture{1}
+Wake_Geom_Position=OutputVortexSturcture{3}
+Wake2_Geom_Position=OutputVortexSturcture{4}
+Wake_Gamma=OutputVortexSturcture{5}
+Wake2_Gamma=OutputVortexSturcture{6}
+rc_panel=OutputVortexSturcture{7}
+end
 
 %% 최적화된 Vortex 유도속도 계산 및 시각화 코드
 
 % 1. 계산할 좌표 그리드 생성 (y는 0으로 고정)
 % xy plane
-xpos = linspace(-0.2, 0.2, 250);
-ypos = linspace(-0.2, 0.2, 250);
+xpos = linspace(-0.5, 0.5, 250);
+ypos = linspace(-0.5, 0.5, 250);
 [X, Y] = meshgrid(xpos, ypos);
 zpos=-0.1
 Z = zpos+zeros(size(X));  % ypos = 0
 % xz plane
-xpos = linspace(-0.2, 0.2, 100);
-zpos = linspace(-0.2, 0.2, 100);
+xpos = linspace(-0.5, 0.5, 250);
+zpos = linspace(-0.5, 0.5, 250);
 [X, Z] = meshgrid(xpos, zpos);
 ypos=0
 Y = ypos+zeros(size(X));  % ypos = 0
@@ -136,7 +143,7 @@ title("Velocity Magnitude Contour(m/s)")
 figure(12)
 clf
 hold on
-quiver(X_grid, Z_grid, Vx_grid, Vz_grid,0.5,'k')
+quiver(X_grid, Z_grid, Vx_grid, Vz_grid,2,'k')
 xlabel('x'); ylabel('z');
 title('Vortex에 의한 유도속도 (x-z 평면)');
 axis equal
