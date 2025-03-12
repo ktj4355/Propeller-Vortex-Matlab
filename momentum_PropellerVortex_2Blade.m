@@ -37,7 +37,7 @@ D	    = R.*2;       %   m
 
 % set propeller
 RPM	        = 8000    ;  %   rev/min
-vFree       = [0,0,4];
+vFree       = [0,0,0];
 method      = 0; % method 0 is local, 1 is mean Local
 rc_Ratio    = 0.5;
 
@@ -48,7 +48,7 @@ vortex_n=1.06;
 Blade   = 2;
 DiskArea=pi*R*R;
 
-dAngle=5; %deg
+dAngle=8; %deg
 rotSpeed=2*pi*RPM/60;  %rad/s
 rot_deg_speed=360*RPM/60; %deg/s
 dt=dAngle./rot_deg_speed;
@@ -127,12 +127,12 @@ gamma_BoundVortex=ones(size(Panel_Point_BD,1),1)*0;
 gamma_BoundVortex2=ones(size(Panel_Point_BD,1),1)*0;
 
 switch method
-case 0 
-    rc_panel=Panel_chord.*rc_Ratio;
-    rc_Geom=Geom_chord.*rc_Ratio;
-case 1
-rc_panel=ones(size(Panel_chord)).*mean(Panel_chord).*rc_Ratio
-rc_Geom=ones(size(Geom_chord)).*mean(Geom_chord).*rc_Ratio
+    case 0
+        rc_panel=Panel_chord.*rc_Ratio;
+        rc_Geom=Geom_chord.*rc_Ratio;
+    case 1
+        rc_panel=ones(size(Panel_chord)).*mean(Panel_chord).*rc_Ratio
+        rc_Geom=ones(size(Geom_chord)).*mean(Geom_chord).*rc_Ratio
 end
 
 %% Rotation Matrix
@@ -199,11 +199,11 @@ while Total_Rotate<RotateTotalAngle
         for gamma_idx=1:length(gamma_Panel_ini) %Bound GaMMA Loop
 
             %Vortex Modeling
-           rc_panel_IJ=rc_panel;
+            rc_panel_IJ=rc_panel;
 
             gamma=gamma_Panel_ini(gamma_idx);
-%Vortex_bio;
-%Vortex_Vatistas;
+            %Vortex_bio;
+            %Vortex_Vatistas;
             % induced velocity by Bound Vortex
             vind_Bound(gamma_idx,:)     =Vortex_Vatistas(now_Geom_Point_BD(gamma_idx,:),now_Geom_Point_BD(gamma_idx+1,:),ColoP,gamma,rc_panel_IJ(gamma_idx),vortex_n);
             vind_trLeft(gamma_idx,:)    =Vortex_Vatistas(now_Geom_Point_TE(gamma_idx,:),now_Geom_Point_BD(gamma_idx,:),ColoP,gamma,rc_panel_IJ(gamma_idx),vortex_n);
@@ -313,8 +313,8 @@ while Total_Rotate<RotateTotalAngle
     vinduced=[];
 
 
-        dT_R1_old=999;
-        dT_R2_old=999;
+    dT_R1_old=999;
+    dT_R2_old=999;
     %gamma=0.5Veff*cl
     for iter=1:1000
         %% Blade 1
@@ -334,11 +334,11 @@ while Total_Rotate<RotateTotalAngle
         v_infow_induced_z_set=I_ini_z*gamma_BoundVortex;
 
         Data_local_raidus1=[];
-        
+
 
         for ridx=1:size(now_Panel_Point_Colocation,1)
 
-        
+
 
             V_inflow_free_Axis = dot(vFree,unit_conv_Axis);
             V_inflow_free_span = dot(vFree,unit_conv_Span);
@@ -579,7 +579,7 @@ while Total_Rotate<RotateTotalAngle
             T2=T2+Tds;
             Q2=Q2+Qds;
             F2=F2+Fds;
-           dT_R2=[dT_R2;Tds];
+            dT_R2=[dT_R2;Tds];
 
         end
         % unit_conv_Span=(R_Pitch(Tilit_Angle)*Rz(AzimuthAngle)*unit_ground_Span);
@@ -593,21 +593,21 @@ while Total_Rotate<RotateTotalAngle
         Q=Q1+Q2;
 
         Total_forceVec=T1.*unit_conv_Axis+T2.*unit_conv2_Axis-F1.*unit_conv_Chord-F2*unit_conv2_Chord;
-% 
-%         if abs(T1old-T1)<0.00001 & abs(T2old-T2)<0.00001
-%             %
-%             break;
-% 
-% 
-% 
-% 
-% 
-%         else
-%             %T
-% 
-%         end
-cri1=max(abs(dT_R1_old-dT_R1));
-cri2=max(abs(dT_R2_old-dT_R2)) ;
+        %
+        %         if abs(T1old-T1)<0.00001 & abs(T2old-T2)<0.00001
+        %             %
+        %             break;
+        %
+        %
+        %
+        %
+        %
+        %         else
+        %             %T
+        %
+        %         end
+        cri1=max(abs(dT_R1_old-dT_R1));
+        cri2=max(abs(dT_R2_old-dT_R2)) ;
         if cri1<0.00001 & cri2<0.00001
 
             %
@@ -777,8 +777,8 @@ cri2=max(abs(dT_R2_old-dT_R2)) ;
         vinf=sqrt(sum(V_inflow2.^2,2));
         vinf=[vinf(1);vinf];
         C=2.*0.5.*(T+momentumTdr)./(rho.*DiskArea);
-         V_wake=-transpose((0.5.*(-vinf+sqrt(vinf.^2+C))).*unit_conv_Axis');
-         IniAx_Vel=V_wake(:)+vinduced_Ax_GeomSet;
+        V_wake=-transpose((0.5.*(-vinf+sqrt(vinf.^2+C))).*unit_conv_Axis');
+        IniAx_Vel=V_wake(:)+vinduced_Ax_GeomSet;
         % IniAx_Vel=vinduced_Ax_GeomSet;
         ini_Wake_velocity=[IniAx_Vel';ini_Wake_velocity];
         ini_Wake2_velocity=[IniAx_Vel';ini_Wake2_velocity];
@@ -860,55 +860,6 @@ cri2=max(abs(dT_R2_old-dT_R2)) ;
         % Wake2_velocity(end,:)=[];
         % Wake2_Gamma(end,:)=[];
 
-        %% Geometry Calculate
-        figure(100)
-        clf
-        hold on
-
-        plot3(now_Panel_Point_Colocation(:,1),now_Panel_Point_Colocation(:,2),now_Panel_Point_Colocation(:,3),'ro-')
-        plot3(now_Panel_Point_BD(:,1),now_Panel_Point_BD(:,2),now_Panel_Point_BD(:,3),'bx-')
-        plot3(now_Panel_Point_LE(:,1),now_Panel_Point_LE(:,2),now_Panel_Point_LE(:,3),'g*-')
-        plot3(now_Panel_Point_TE(:,1),now_Panel_Point_TE(:,2),now_Panel_Point_TE(:,3),'k*-')
-        for idx=int16(length(WakeGammaset)/4):length(WakeGammaset)
-            %for idx=length(WakeGammaset)
-            xind=(idx-1)*3+1;
-            yind=(idx-1)*3+2;
-            zind=(idx-1)*3+3;
-
-            plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'k:')
-        end
-
-        plot3(now_Panel2_Point_Colocation(:,1),now_Panel2_Point_Colocation(:,2),now_Panel2_Point_Colocation(:,3),'ro-')
-        plot3(now_Panel2_Point_BD(:,1),now_Panel2_Point_BD(:,2),now_Panel2_Point_BD(:,3),'bx-')
-        plot3(now_Panel2_Point_LE(:,1),now_Panel2_Point_LE(:,2),now_Panel2_Point_LE(:,3),'g*-')
-        plot3(now_Panel2_Point_TE(:,1),now_Panel2_Point_TE(:,2),now_Panel2_Point_TE(:,3),'k*-')
-        for idx=int16(length(WakeGammaset)/4):length(WakeGammaset)
-            %for idx=length(WakeGammaset)
-            xind=(idx-1)*3+1;
-            yind=(idx-1)*3+2;
-            zind=(idx-1)*3+3;
-
-            plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'k:')
-        end
-        %plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'r:')
-        %plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'r:')
-
-        xlabel("x (m)")
-        ylabel("y (m)")
-        zlabel("z (m)")
-        title(["Propeller & Wake Structure ";"(semi-Free Wake method)"])
-
-
-        view([1,1,1])
-        axis equal
-        %
-        % filename=sprintf("FIG_%05dRPM_%04dANGLE.png",RPM,Total_Rotate)
-        % exportgraphics(figure(100),'fig1/'+filename,'Resolution',300)
-        % view(unit_conv2_Chord')
-        % axis equal
-        % filename=sprintf("FIG_%05dRPM_%04dANGLE.png",RPM,Total_Rotate)
-        % exportgraphics(figure(100),'fig2/'+filename,'Resolution',300)
-        % view([1,1,1])
 
     end
 
@@ -936,25 +887,7 @@ cri2=max(abs(dT_R2_old-dT_R2)) ;
     MTav=Avarge_Global(end);
     err=(abs(MTav-Tav)./MTav)*1000;
 
-    figure(6)
-    clf
-    hold on
-    plot(globalData(:,2),Avarge_globalData(:,4),'k')
-    plot(globalData(:,2),Avarge_globalData(:,7),'r')
 
-    plot(globalData(:,2),Avarge_globalData(:,8),'b')
-    plot(globalData(:,2),Avarge_globalData(:,end),'g')
-
-    plot(globalData(:,2),globalData(:,4),'k:')
-    plot(globalData(:,2),globalData(:,7),'r:')
-
-    plot(globalData(:,2),globalData(:,8),'b:')
-    plot(globalData(:,2),globalData(:,end),'g:')
-
-    xlabel("Total Rotation Angle (deg)")
-    ylabel("Thrust(N)")
-    title("Thrust Calculation")
-    legend("Total Thrust", "Blade 1 Thrust", "Blade 2 Thrust","Momentum Thrust",'Location','best')
     time_Postcalc=toc(timer_1);
 
     fprintf("Iter Calculated!\n")
@@ -1023,25 +956,132 @@ cri2=max(abs(dT_R2_old-dT_R2)) ;
         Wake2_Gamma
         rc_panel
         };
-    figure(4)
+
+
+    figure(100)
 clf
-hold on
-plot(Data_local_raidus1(:,1),Data_local_raidus1(:,3),'r') % Flow
-plot(Data_local_raidus1(:,1),Data_local_raidus1(:,4),'g') % alpha
-plot(Data_local_raidus1(:,1),Data_local_raidus1(:,6),'b') %beta
-legend("Flow","Alpha","beta")
+    tiledlayout(3,3)
+    
+    nexttile([2,2])
+
+        %% Geometry Calculate
+        
+        hold on; grid off
+
+        plot3(now_Panel_Point_Colocation(:,1),now_Panel_Point_Colocation(:,2),now_Panel_Point_Colocation(:,3),'ro-')
+        plot3(now_Panel_Point_BD(:,1),now_Panel_Point_BD(:,2),now_Panel_Point_BD(:,3),'rx-')
+        plot3(now_Panel_Point_LE(:,1),now_Panel_Point_LE(:,2),now_Panel_Point_LE(:,3),'r*-')
+        plot3(now_Panel_Point_TE(:,1),now_Panel_Point_TE(:,2),now_Panel_Point_TE(:,3),'r*-')
+        for idx=int16(length(WakeGammaset)/4):length(WakeGammaset)
+            %for idx=length(WakeGammaset)
+            xind=(idx-1)*3+1;
+            yind=(idx-1)*3+2;
+            zind=(idx-1)*3+3;
+
+            plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'k:')
+        end
+
+        plot3(now_Panel2_Point_Colocation(:,1),now_Panel2_Point_Colocation(:,2),now_Panel2_Point_Colocation(:,3),'bo-')
+        plot3(now_Panel2_Point_BD(:,1),now_Panel2_Point_BD(:,2),now_Panel2_Point_BD(:,3),'bx-')
+        plot3(now_Panel2_Point_LE(:,1),now_Panel2_Point_LE(:,2),now_Panel2_Point_LE(:,3),'b*-')
+        plot3(now_Panel2_Point_TE(:,1),now_Panel2_Point_TE(:,2),now_Panel2_Point_TE(:,3),'b*-')
+        for idx=int16(length(WakeGammaset)/4):length(WakeGammaset)
+            %for idx=length(WakeGammaset)
+            xind=(idx-1)*3+1;
+            yind=(idx-1)*3+2;
+            zind=(idx-1)*3+3;
+
+            plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'k:')
+        end
+        %plot3(Wake2_Geom_Position(1:end,xind),Wake2_Geom_Position(1:end,yind),Wake2_Geom_Position(1:end,zind),'r:')
+        %plot3(Wake_Geom_Position(1:end,xind),Wake_Geom_Position(1:end,yind),Wake_Geom_Position(1:end,zind),'r:')
+
+        xlabel("x (m)")
+        ylabel("y (m)")
+        zlabel("z (m)")
+        title(["Propeller & Wake Structure ";"(semi-Free Wake method)"])
 
 
-figure(5)
-clf
-hold on
-plot(Data_local_raidus1(:,1),Data_local_raidus1(:,8),'r') % Flow
+        view([1,1,1])
+        axis equal
+        %
+        % filename=sprintf("FIG_%05dRPM_%04dANGLE.png",RPM,Total_Rotate)
+        % exportgraphics(figure(100),'fig1/'+filename,'Resolution',300)
+        % view(unit_conv2_Chord')
+        % axis equal
+        % filename=sprintf("FIG_%05dRPM_%04dANGLE.png",RPM,Total_Rotate)
+        % exportgraphics(figure(100),'fig2/'+filename,'Resolution',300)
+        % view([1,1,1])
 
 
-figure(7)
-clf
-hold on
-plot(Data_local_raidus1(:,1),Blade1Re(end,:),'r') % Flow
+
+    nexttile
+
+    hold on; grid on
+    plot(globalData(:,2),Avarge_globalData(:,4),'k')
+    plot(globalData(:,2),Avarge_globalData(:,7),'r')
+
+    plot(globalData(:,2),Avarge_globalData(:,8),'b')
+    plot(globalData(:,2),Avarge_globalData(:,end),'g')
+
+    plot(globalData(:,2),globalData(:,4),'k:')
+    plot(globalData(:,2),globalData(:,7),'r:')
+
+    plot(globalData(:,2),globalData(:,8),'b:')
+    plot(globalData(:,2),globalData(:,end),'g:')
+
+    xlabel("Total Rotation Angle (deg)")
+    ylabel("Thrust(N)")
+    title("Thrust Calculation")
+    legend("Total Thrust", "Blade 1 Thrust", "Blade 2 Thrust","Momentum Thrust",'Location','best')
+
+    nexttile
+    
+    hold on; grid on
+    plot(Data_local_raidus1(:,1),Data_local_raidus1(:,8),'rx-') % Flow
+    plot(Data_local_raidus1(:,1),Data_local_raidus1(:,8),'bo-') % Flow
+
+    legend("Blade 1 Thrust", "Blade 2 Thrust",'Location','best')
+    title("Local Blade Thrust ")
+    xlabel("r/R")
+    ylabel("N")
+
+    nexttile
+
+    
+    hold on; grid on
+    plot(Data_local_raidus1(:,1),Data_local_raidus1(:,3),'r') % Flow
+    plot(Data_local_raidus1(:,1),Data_local_raidus1(:,4),'g') % alpha
+    plot(Data_local_raidus1(:,1),Data_local_raidus1(:,6),'b') %beta
+    legend("Flow","Alpha","beta",'Location','best')
+    title("Inflow Angle")
+    xlabel("r/R")
+    ylabel("Deg")
+
+    nexttile
+    hold on; grid on
+    plot(Data_local_raidus1(:,1),Blade1Re(end,:),'rx-') % Flow
+        plot(Data_local_raidus2(:,1),Blade2Re(end,:),'bo-') % Flow
+legend("Blade 1", "Blade 2",'Location','best')
+    grid on
+    title("Reynolds Number")
+    xlabel("r/R")
+    ylabel("Reynolds Number")
+
+    nexttile
+    hold on; grid on
+     plot(Data_local_raidus1(:,1),V_inflow1(:,3),'r')
+    plot(Data_local_raidus1(:,1),vind_Wake(:,3),'g') % Flow
+    plot(Data_local_raidus1(:,1),v_infow_induced_z_set,'b') % alpha
+        plot(Data_local_raidus1(:,1),V_inflow1(:,3)+vind_Wake(:,3)+v_infow_induced_z_set,'k') % alpha
+
+    legend("Flow","Wake Induced","Blade Induced","Total",'Location','best')
+    title("Induced Velocity (blade1)")
+ 
+    
+    xlabel("r/R")
+    ylabel("Reynolds Number")
+
 
 end
 
@@ -1084,25 +1124,25 @@ Clac_time=toc(GlobalTimer);
 fprintf("Calculate Done!!\n")
 fprintf("Calculate Time : %.3f s\n",Clac_time)
 
-  fprintf("Time= %.3fsec\n",Time)
+fprintf("Time= %.3fsec\n",Time)
 
-    fprintf("T= %.3fN  Q= %.3fNm\n",T,Q)
-    fprintf("T(avarage)= %.3fN | Q(avarge)= %.3fNm | P(avearge)= %.3f‰\n",Tav,Qav,err)
-    fprintf("Excell Form : %f, %f, %f, %f, %f, %f\n",Tav,Qav,Pav,FxAver,FyAver,FzAver)
+fprintf("T= %.3fN  Q= %.3fNm\n",T,Q)
+fprintf("T(avarage)= %.3fN | Q(avarge)= %.3fNm | P(avearge)= %.3f‰\n",Tav,Qav,err)
+fprintf("Excell Form : %f, %f, %f, %f, %f, %f\n",Tav,Qav,Pav,FxAver,FyAver,FzAver)
 
-    fprintf("momentumT= %.3fN\n",momentumTdr)
+fprintf("momentumT= %.3fN\n",momentumTdr)
 
-    fprintf("Now Angle= %.3fdeg  TotalAngle= %.3fdeg\n",AzimuthAngle,Total_Rotate)
+fprintf("Now Angle= %.3fdeg  TotalAngle= %.3fdeg\n",AzimuthAngle,Total_Rotate)
 
-    fprintf("IJ Matrix Calculate Time    = %.3fsec\n",time_IJcalc)
-    fprintf("Wake Induced Calculate Time = %.3fsec\n",time_WakeInduced)
-    fprintf("VLM Calc                    = %.3fsec\n",time_BladeModel)
+fprintf("IJ Matrix Calculate Time    = %.3fsec\n",time_IJcalc)
+fprintf("Wake Induced Calculate Time = %.3fsec\n",time_WakeInduced)
+fprintf("VLM Calc                    = %.3fsec\n",time_BladeModel)
 
-    fprintf("Induced Velocity Prepare    = %.3fsec\n",time_Wake_inducedV)
-    fprintf("Wake Wake Interaction Calc. = %.3fsec\n",time_Wake_Wake)
-    fprintf("Blade Wake Interaction Calc.= %.3fsec\n",time_Wake_Blade)
-    fprintf("Post Calcualte Time         = %.3fsec\n",time_Postcalc)
-    fprintf("\n\n")
+fprintf("Induced Velocity Prepare    = %.3fsec\n",time_Wake_inducedV)
+fprintf("Wake Wake Interaction Calc. = %.3fsec\n",time_Wake_Wake)
+fprintf("Blade Wake Interaction Calc.= %.3fsec\n",time_Wake_Blade)
+fprintf("Post Calcualte Time         = %.3fsec\n",time_Postcalc)
+fprintf("\n\n")
 %%
 
 
