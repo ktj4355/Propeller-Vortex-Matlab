@@ -34,11 +34,17 @@ Avarge_globalData=[];
 alt     = 0 ;         %   m
 D	    = R.*2;       %   m
 %V      = eps;
-RPM	    = 8000    ;  %   rev/min
-vFree= [0,0,4];
+
+% set propeller
+RPM	        = 8000    ;  %   rev/min
+vFree       = [0,0,4];
+method      = 0; % method 0 is local, 1 is mean Local
+rc_Ratio    = 0.5;
+
+% Calc variable
+
 nAzmuth=2;
-rc_Ratio=0.5;
-vortex_n=1;
+vortex_n=1.06;
 Blade   = 2;
 DiskArea=pi*R*R;
 
@@ -120,11 +126,14 @@ gamma_Panel_ini=ones(size(Panel_Point_BD,1),1);
 gamma_BoundVortex=ones(size(Panel_Point_BD,1),1)*0;
 gamma_BoundVortex2=ones(size(Panel_Point_BD,1),1)*0;
 
-rc_panel=Panel_chord.*rc_Ratio;
-%rc_panel=ones(size(Panel_chord)).*mean(Panel_chord).*rc_Ratio
-
-rc_Geom=Geom_chord.*rc_Ratio;
-%rc_Geom=ones(size(Geom_chord)).*mean(Geom_chord).*rc_Ratio
+switch method
+case 0 
+    rc_panel=Panel_chord.*rc_Ratio;
+    rc_Geom=Geom_chord.*rc_Ratio;
+case 1
+rc_panel=ones(size(Panel_chord)).*mean(Panel_chord).*rc_Ratio
+rc_Geom=ones(size(Geom_chord)).*mean(Geom_chord).*rc_Ratio
+end
 
 %% Rotation Matrix
 Rz=@(theta)[cosd(theta) -sind(theta), 0;sind(theta),cosd(theta), 0;0,0,1];
