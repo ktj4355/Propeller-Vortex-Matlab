@@ -9,7 +9,7 @@ hub=0;
 
 RPM	        =   8000    ;  %   rev/min
 method      =   0; % method 0 is local, 1 is mean Local
-rc_Ratio    =  0.5;
+rc_Ratio    =  0.45;
 vortex_n    =   1.06;
 caseName    =   "Test";
 dAngle      =   10; %deg
@@ -18,13 +18,7 @@ dAngle      =   10; %deg
      fprintf(fid,"\n");
      fclose(fid);
 
-Calc_case=[RPM,0,0,0
-
-    RPM,0,0,-5;
-    RPM,0,0,-10;
-    RPM,0,0,-15;
-    RPM,0,0,-20;
-    RPM,5,0,0;
+Calc_case=[RPM,5,0,0;
     RPM,10,0,0;
     RPM,15,0,0;
     RPM,20,0,0;];
@@ -585,7 +579,7 @@ for CaseInd=1:size(Calc_case,1)
 
 
                 Veff=sqrt((V_FlowInduced_Axis.^2+V_FlowInduced_Chord.^2));
-                Veff=sqrt((V_inflow_sum_axis.^2+V_inflow_sum_chord.^2));
+                %Veff=sqrt((V_inflow_sum_axis.^2+V_inflow_sum_chord.^2));
 
                 beta=Panel_Beta(ridx);
                 rR_local=r./R;
