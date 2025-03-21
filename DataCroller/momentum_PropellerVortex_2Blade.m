@@ -4,13 +4,16 @@ clc
 clear
 close all
 load("InterpolatedModel.mat")
+    alt     = 0 ;         %   m
+    [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
 
+rho=1.18
 
 RPM	        =   8000    ;  %   rev/min
-method      =   1; % method 0 is local, 1 is mean Local
-rc_Ratio    =   0.3;
+method      =   0; % method 0 is local, 1 is mean Local
+rc_Ratio    =   0.5;
 vortex_n    =   1.06;
-caseName    =   "Case4";
+caseName    =   "Case3_Den_local_ncrit9";
 dAngle      =   10; %deg
     Full_Logfilename=sprintf("[LOG]_%s.txt",caseName);
     fid=fopen(Full_Logfilename,'w');
@@ -66,7 +69,6 @@ for CaseInd=1:size(Calc_case,1)
     %% Set Operation Condition
 
     % Setup Condition
-    alt     = 0 ;         %   m
     D	    = R.*2;       %   m
     %V      = eps;
     
@@ -86,7 +88,6 @@ for CaseInd=1:size(Calc_case,1)
     RotateTotalAngle=4000;
     initialAngle=0;
 
-    [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
     n       =RPM./60;
     %J	    =V./(n.*D);
     V_tip	=2*pi*n.*R;

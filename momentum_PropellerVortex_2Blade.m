@@ -37,8 +37,8 @@ D	    = R.*2;       %   m
 
 % set propeller
 RPM	        = 8000    ;  %   rev/min
-vFree       = [0,0,0];
-method      = 0; % method 0 is local, 1 is mean Local
+vFree       = [5,0,0];
+method      = 1; % method 0 is local, 1 is mean Local
 rc_Ratio    = 0.5;
 
 % Calc variable

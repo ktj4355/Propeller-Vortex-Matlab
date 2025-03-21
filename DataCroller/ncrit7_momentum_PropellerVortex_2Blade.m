@@ -4,13 +4,17 @@ clc
 clear
 close all
 load("InterpolatedModel_ncrit7.mat")
-
-
+ % Setup Condition
+    alt     = 0 ;         %   m
+    %V      = eps;
+    [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
+    rho=1.18
+hub=0.2;
 RPM	        =   8000    ;  %   rev/min
-method      =   0; % method 0 is local, 1 is mean Local
-rc_Ratio    =   0.5;
+method      =   1; % method 0 is local, 1 is mean Local
+rc_Ratio    =   0.3;
 vortex_n    =   1.06;
-caseName    =   "Case3_local_ncrit7";
+caseName    =   "Case5_den118_mean_ncrit7";
 dAngle      =   10; %deg
     Full_Logfilename=sprintf("[LOG]_%s.txt",caseName);
     fid=fopen(Full_Logfilename,'w');
@@ -66,7 +70,6 @@ for CaseInd=1:size(Calc_case,1)
     %% Set Operation Condition
 
     % Setup Condition
-    alt     = 0 ;         %   m
     D	    = R.*2;       %   m
     %V      = eps;
     
@@ -86,7 +89,7 @@ for CaseInd=1:size(Calc_case,1)
     RotateTotalAngle=4000;
     initialAngle=0;
 
-    [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
+   
     n       =RPM./60;
     %J	    =V./(n.*D);
     V_tip	=2*pi*n.*R;
@@ -697,7 +700,7 @@ for CaseInd=1:size(Calc_case,1)
         vinduced_Ax_GeomSet=[vinduced_Ax_set(:,1), vinduced_Ax_GeomSet, vinduced_Ax_set(:,end)];
         vinduced_Ax_GeomSet=vinduced_Ax_GeomSet(:);
         WakeGammaset=[0;gamma_BoundVortex]-[gamma_BoundVortex;0];
-        %WakeGammaset(1)=0;
+        WakeGammaset(find(Geom_rR<hub))=0;
         Wake_Geom_Position=[wakeForm;Wake_Geom_Position]; %x y z x y z
 
 
@@ -711,7 +714,7 @@ for CaseInd=1:size(Calc_case,1)
         vinduced2_Ax_GeomSet=[vinduced2_Ax_set(:,1), vinduced2_Ax_GeomSet, vinduced2_Ax_set(:,end)];
         vinduced2_Ax_GeomSet=vinduced2_Ax_GeomSet(:);
         WakeGammaset2=[0;gamma_BoundVortex2]-[gamma_BoundVortex2;0];
-        % WakeGammaset2(1)=0;
+        WakeGammaset2(find(Geom_rR<hub))=0;
         Wake2_Geom_Position=[wakeForm2;Wake2_Geom_Position]; %x y z x y z
 
 

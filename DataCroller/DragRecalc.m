@@ -11,6 +11,8 @@ RPM	        =   8000    ;  %   rev/min
 method      =   0; % method 0 is local, 1 is mean Local
 rc_Ratio    =  0.45;
 vortex_n    =   1.06;
+
+
 caseName    =   "Test";
 dAngle      =   10; %deg
     Full_Logfilename=sprintf("[LOG]_%s.txt",caseName);
