@@ -3,19 +3,21 @@
 clc
 clear
 close all
-load("InterpolatedModel.mat")
+load("InterpolatedModel_ncrit7.mat")
 hub=0;
 
 
 RPM	        =   8000    ;  %   rev/min
 method      =   0; % method 0 is local, 1 is mean Local
-rc_Ratio    =  0.45;
+rc_Ratio    =  0.6;
 vortex_n    =   1.06;
+
+
 alt     = 0 ;         %   m
 [Tmp, Pressure, rho, D_vis, a] = STD_Atm(alt);
 rho=1.225;
 
-caseName    =   "Test";
+caseName    =   "A1_7_1.06_Local";
 
 
 dAngle      =   10; %deg
@@ -24,10 +26,16 @@ fid=fopen(Full_Logfilename,'w');
 fprintf(fid,"\n");
 fclose(fid);
 
-Calc_case=[RPM,5,0,0;
-    RPM,10,0,0;
-    RPM,15,0,0;
-    RPM,20,0,0;];
+Calc_case=[
+    RPM,0,0,0;
+    RPM,0,0,-3;
+    RPM,0,0,-5;
+    RPM,0,0,-7;
+    RPM,0,0,-10;
+    RPM,0,0,-12;
+    RPM,0,0,-15;
+    RPM,0,0,-17;
+    RPM,0,0,-20;];
 
 Calc_data=[];
 mkdir 'OutputData'
